@@ -4912,7 +4912,7 @@ else:
 
 <!-- ============ PAGE DATASETS: 数据集收录与检索 ============ -->
 <section id="p-datasets" class="page">
-  <div class="page-title"><h2>数据集收录与检索</h2><div class="meta">Zenodo 数据集检索 · 公开数据集 · 私有数据集</div></div>
+  <div class="page-title"><h2>数据集收录与检索</h2><div class="meta">Harvard Dataverse 检索 · 公开数据集 · 私有数据集</div></div>
 
   <!-- 顶部快速跳转按钮 -->
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px">
@@ -4921,7 +4921,7 @@ else:
     <button class="btn sm violet" onclick="document.getElementById('ds-section-private').scrollIntoView({behavior:'smooth',block:'start'})"> 私有数据集</button>
   </div>
 
-  <!-- 模块1：Zenodo 数据集检索框 -->
+  <!-- 模块1：Dataverse 数据集检索框 -->
   <div id="ds-section-search" style="border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:24px;background:var(--bg-card)">
     <h3 style="margin:0 0 8px"> 数据集检索（Harvard Dataverse 开放获取）</h3>
     <div class="toolbar">
@@ -4938,7 +4938,6 @@ else:
 
   <!-- 模块2：公开数据集 -->
   <div id="ds-section-public">
-    <h3 style="margin:0 0 12px;padding-top:8px"> 公开数据集</h3>
     <div id="ds-tab-public">
       <div class="page-title" style="margin-top:0"><h2>公开数据集</h2><div class="meta" id="dset-count">载入中…</div></div>
       <div id="dset-tabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"><button class="dset-cat-btn active" data-c="all" onclick="filterDsets('all')">全部</button><button class="dset-cat-btn" data-c="m1" onclick="filterDsets('m1')">中国国内</button><button class="dset-cat-btn" data-c="m2" onclick="filterDsets('m2')">国际数据</button><button class="dset-cat-btn" data-c="m3" onclick="filterDsets('m3')">脑科学</button><button class="dset-cat-btn" data-c="policy" onclick="filterDsets('policy')">政策/监测</button><button class="dset-cat-btn" data-c="survey" onclick="filterDsets('survey')">调查/队列</button></div>
@@ -5172,7 +5171,7 @@ async function dsSearch(){
   elSt.className='empty-tip'; elSt.innerHTML=' 正在从 Dataverse 检索数据集…<br><small style="color:var(--muted)">Harvard Dataverse Open Access</small>';
 
   try{
-    var z=await withTimeout(fetchZenodo(q,yMin),15000,'Zenodo');
+    var z=await withTimeout(fetchZenodo(q,yMin),20000,'Dataverse');
     DS_RESULTS=z;
     if(DS_RESULTS.length===0){
       elSt.className='empty-tip'; elSt.innerHTML=' 未检索到数据集。请尝试更换关键词。<br><small style="color:var(--muted)">提示：使用英文关键词通常命中更多结果。</small>';
@@ -5183,10 +5182,10 @@ async function dsSearch(){
   }catch(e){
     var msg=e.message||String(e);
     var hint='';
-    if(/TIMEOUT/i.test(msg)) hint='<br><small style="color:var(--muted)">网络较慢，Zenodo 响应超时。可稍后重试，或检查网络连接。</small>';
-    else if(/Failed to fetch|Network/i.test(msg)) hint='<br><small style="color:var(--muted)">网络请求失败，可能是网络连接问题或 Zenodo 暂时不可达。请检查网络后重试。</small>';
+    if(/TIMEOUT/i.test(msg)) hint='<br><small style="color:var(--muted)">网络较慢，Dataverse 响应超时。可稍后重试，或检查网络连接。</small>';
+    else if(/Failed to fetch|Network/i.test(msg)) hint='<br><small style="color:var(--muted)">网络请求失败，可能是网络连接问题或 Dataverse 暂时不可达。请检查网络后重试。</small>';
     elSt.className='empty-tip'; elSt.innerHTML=' 检索出错：'+escapeHtml(msg)+hint;
-    console.error('Zenodo dsSearch',e);
+    console.error('Dataverse dsSearch',e);
   }
 }
 
@@ -5204,10 +5203,10 @@ function dsRenderResults(){
     if(r.year) tags+='<span class="tag">'+r.year+'年</span> ';
     if(r.type) tags+='<span class="tag">'+r.type+'</span> ';
     tags+='<span class="tag" style="background:rgba(16,185,129,.15)">数据集</span>';
-    if(r.rid) tags+='<span class="tag">Zenodo:'+r.rid+'</span>';
+    if(r.rid) tags+='<span class="tag">Dataverse:'+r.rid+'</span>';
     card.innerHTML='<div class="rc-title"><a href="'+(r.url||'#')+'" target="_blank">'+(r.title||'无标题')+'</a></div>'
       +'<div class="rc-authors">'+authors+'</div>'
-      +'<div class="rc-journal">'+(r.journal||'Zenodo')+'</div>'
+      +'<div class="rc-journal">'+(r.journal||'Harvard Dataverse')+'</div>'
       +(r.doi?'<div class="rc-doi">doi: '+r.doi+'</div>':'')
       +'<div class="rc-tags">'+tags+'</div>'
       +'<div class="rc-actions">'
@@ -5307,8 +5306,8 @@ async function doSearch(){
 async function fetchZenodo(q, yMin){
   // 使用 Harvard Dataverse API（中国直连可用，无需代理）
   // API 文档: https://guides.dataverse.org/en/latest/api/search.html
-  var searchQ=q+' (mental OR depression OR anxiety OR psychiatry OR cognitive OR neuroscience OR psychology OR mental health OR behavioral OR brain)';
-  var u='https://dataverse.harvard.edu/api/search?q='+encodeURIComponent(searchQ)+'&type=dataset&per_page=20&sort=date&order=desc';
+  var searchQ=q+' AND (mental OR depression OR anxiety OR psychiatric OR psychological OR neuroscience OR psychiatry)';
+  var u='https://dataverse.harvard.edu/api/search?q='+encodeURIComponent(searchQ)+'&type=dataset&per_page=20&sort=score&order=desc';
   var r=await fetch(u,{cache:'no-store'});
   if(!r.ok) throw new Error('Dataverse HTTP '+r.status);
   var j=await r.json();
@@ -5430,7 +5429,7 @@ function renderResults(){
   el.innerHTML=list.map(function(r,i){
     var idx=start+i;
     var isDataset=r.kind==='dataset';
-    var srcClass=r.source==='PubMed'?'ok':(r.source==='Zenodo'?'warn':(r.source==='S2'?'accent2':'grey'));
+    var srcClass=r.source==='PubMed'?'ok':(r.source==='Dataverse'?'warn':(r.source==='S2'?'accent2':'grey'));
     var typeBadge=isDataset?'<span class="chip warn"> 数据集</span>':'<span class="chip ok">文献</span>';
     var badges=[typeBadge,'<span class="chip '+srcClass+'">'+r.source+'</span>', r.year?r.year+'年':''].filter(Boolean).join(' ');
     var cites=r.citations?('<span class="chip">引用 '+r.citations+'</span>'):'';
@@ -5438,7 +5437,7 @@ function renderResults(){
       ?('<div style="margin-top:4px">'
          +(r.access?'<span class="chip grey">访问：'+r.access+'</span> ':'')
          +(r.size?'<span class="chip grey">'+r.size+'</span> ':'')
-         +'<span class="chip grey">来源 Zenodo · 真实数据</span></div>')
+         +'<span class="chip grey">来源 Harvard Dataverse · 真实数据</span></div>')
       :'';
     return '<div class="result"'+(isDataset?' style="border-left:4px solid var(--warn)"':'')+'>'
       +'<div class="rtop"><h4 onclick="window.open(\''+(r.url||'#')+'\',\'_blank\')" title="点击打开原文 / 原始记录">'+r.title+'</h4><div>'+badges+' '+cites+'</div></div>'
