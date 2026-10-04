@@ -5092,6 +5092,15 @@ else:
       <label class="src-chk"><input type="checkbox" class="c-fmt" data-f="json" checked> JSON 原始</label>
     </div>
 
+    <h4 style="margin:14px 0 6px;color:var(--accent2)">📥 数据文件下载</h4>
+    <div class="toolbar" style="flex-wrap:wrap">
+      <label class="src-chk"><input type="checkbox" id="c-dl-files" checked> 下载数据集的实际数据文件（CSV/XLSX/ZIP 等）</label>
+      <span style="color:var(--ink2)">单文件上限</span>
+      <input class="input" id="c-max-mb" type="number" value="50" min="1" style="width:80px">
+      <span style="color:var(--ink2)">MB</span>
+    </div>
+    <p style="color:var(--muted);font-size:12px;margin:6px 0 0">勾选后会自动下载 Harvard Dataverse / Zenodo / WHO / Kaggle 等数据集的原始数据文件，存放在输出目录的 <code>data_files/</code> 子文件夹中。</p>
+
     <h4 style="margin:14px 0 6px;color:var(--accent)">🤖 AI 摘要（可选，需 SiliconFlow Key）</h4>
     <div class="toolbar" style="flex-wrap:wrap">
       <label class="src-chk"><input type="checkbox" id="c-use-llm" checked> 启用 AI 分类摘要</label>
@@ -14124,7 +14133,11 @@ import json, time, os, sys, re, csv, hashlib
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
+# ============================================================
+# 【配置区】—— 由网页生成器自动填写，也可手动修改
+# ============================================================
 CONFIG = __CRAWLER_CONFIG__
+# ============================================================
 
 RATE_DELAY = 0.5
 TIMEOUT = 30
@@ -14159,6 +14172,94 @@ def http_get(url, retries=2, headers=None, timeout=TIMEOUT):
             else:
                 return None
     return None
+
+def safe_filename(name):
+    """清理文件名中的非法字符"""
+    name = re.sub(r'[\\/:*?"<>|\r\n\t]', "_", name).strip()
+    return name[:120] or "file"
+
+def download_file(url, dest_dir, filename=None, max_mb=50):
+    """下载单个文件到 dest_dir，返回保存路径或 None。带大小检查。"""
+    try:
+        import urllib.request as u
+        req = u.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with u.urlopen(req, timeout=60) as resp:
+            # 检查大小
+            cl = resp.headers.get("Content-Length")
+            if cl:
+                size_mb = int(cl) / (1024*1024)
+                if size_mb > max_mb:
+                    log(f"  跳过超大文件 ({size_mb:.1f}MB > {max_mb}MB): {filename or url}", "WARN")
+                    return None
+            if not filename:
+                cd = resp.headers.get("Content-Disposition", "")
+                m = re.search(r'filename="?([^";]+)"?', cd)
+                filename = m.group(1) if m else url.rsplit("/",1)[-1].split("?")[0]
+            filename = safe_filename(filename)
+            dest = os.path.join(dest_dir, filename)
+            # 避免同名覆盖
+            base, ext = os.path.splitext(dest)
+            n = 1
+            while os.path.exists(dest):
+                dest = f"{base}_{n}{ext}"
+                n += 1
+            with open(dest, "wb") as f:
+                while True:
+                    chunk = resp.read(65536)
+                    if not chunk: break
+                    f.write(chunk)
+            return os.path.abspath(dest)
+    except Exception as e:
+        log(f"  下载失败: {filename or url} - {e}", "WARN")
+        return None
+
+def download_dataset_files(items, out_dir):
+    """下载所有数据集条目的实际数据文件，返回下载统计。"""
+    files_dir = os.path.join(out_dir, "data_files")
+    os.makedirs(files_dir, exist_ok=True)
+    downloaded = 0
+    skipped = 0
+    for it in items:
+        if it.get("type") != "dataset": continue
+        files = it.get("files") or []
+        if not files: continue
+        # 每个数据集建一个子目录
+        ds_name = safe_filename(it.get("title","dataset"))[:60]
+        ds_dir = os.path.join(files_dir, ds_name)
+        os.makedirs(ds_dir, exist_ok=True)
+        for f in files:
+            furl = f.get("url","")
+            fname = f.get("name","")
+            if not furl: continue
+            log(f"  下载: {fname or furl[:50]}")
+            # Kaggle 专用下载协议
+            if furl.startswith("kaggle://"):
+                try:
+                    import kaggle, zipfile
+                    ref = furl[len("kaggle://"):]
+                    kaggle.api.authenticate()
+                    zip_path = os.path.join(ds_dir, fname)
+                    kaggle.api.dataset_download_files(ref, path=ds_dir, unzip=False)
+                    # 解压
+                    if os.path.exists(zip_path) and zipfile.is_zipfile(zip_path):
+                        with zipfile.ZipFile(zip_path) as zf:
+                            zf.extractall(ds_dir)
+                    downloaded += 1
+                    f["local_path"] = os.path.abspath(ds_dir)
+                except Exception as e:
+                    log(f"  Kaggle 下载失败: {e}", "WARN")
+                    skipped += 1
+                time.sleep(0.5)
+                continue
+            saved = download_file(furl, ds_dir, fname, CONFIG["max_file_size_mb"])
+            if saved:
+                downloaded += 1
+                f["local_path"] = saved
+            else:
+                skipped += 1
+            time.sleep(0.3)
+    log(f"数据文件下载完成: 成功 {downloaded} 个，跳过/失败 {skipped} 个")
+    return {"downloaded": downloaded, "skipped": skipped, "dir": files_dir}
 
 def dedup_key(item):
     """去重键：DOI > PMID > 标题hash"""
@@ -14427,16 +14528,37 @@ def crawl_harvard_dataverse(topic, max_results):
         desc = (it.get("description") or "")
         desc = re.sub(r"<[^>]+>", " ", desc)
         desc = re.sub(r"\s+", " ", desc).strip()[:500]
+        doi = (it.get("global_id") or "").replace("doi:","")
+        # 获取该数据集的实际文件列表
+        files = []
+        if doi and CONFIG.get("download_data_files"):
+            detail_url = f"https://dataverse.harvard.edu/api/datasets/:persistentId?persistentId=doi:{doi}"
+            dr = http_get(detail_url)
+            if dr:
+                try:
+                    dj = json.loads(dr)
+                    for f in ((dj.get("data") or {}).get("latestVersion") or {}).get("files", []) or []:
+                        df = f.get("dataFile", {})
+                        fid = df.get("id")
+                        if fid:
+                            files.append({
+                                "name": df.get("filename","datafile"),
+                                "url": f"https://dataverse.harvard.edu/api/access/datafile/{fid}",
+                                "size": df.get("filesize",0),
+                            })
+                except: pass
+            time.sleep(RATE_DELAY)
         out.append({
             "type": "dataset", "source": "Harvard Dataverse",
             "title": it.get("name","(无标题)"),
-            "doi": (it.get("global_id") or "").replace("doi:",""),
+            "doi": doi,
             "authors": ", ".join((it.get("authors") or [])[:5]),
             "year": yr, "abstract": desc,
-            "file_count": it.get("fileCount",0),
-            "url": it.get("url") or f"https://doi.org/{(it.get('global_id') or '').replace('doi:','')}",
+            "file_count": len(files) or it.get("fileCount",0),
+            "files": files,
+            "url": it.get("url") or f"https://doi.org/{doi}",
         })
-    log(f"Harvard Dataverse: 获取 {len(out)} 条")
+    log(f"Harvard Dataverse: 获取 {len(out)} 条 (含文件链接)")
     return out
 
 def crawl_zenodo(topic, max_results):
@@ -14461,16 +14583,24 @@ def crawl_zenodo(topic, max_results):
         desc = re.sub(r"<[^>]+>", " ", desc)
         desc = re.sub(r"\s+", " ", desc).strip()[:500]
         creators = ", ".join([c.get("name","") for c in (md.get("creators") or [])[:5]])
+        # Zenodo 搜索结果直接包含文件列表
+        files = []
+        if CONFIG.get("download_data_files"):
+            for f in it.get("files", []) or []:
+                furl = f.get("links",{}).get("self","")
+                if furl:
+                    files.append({"name": f.get("key","file"), "url": furl, "size": f.get("size",0)})
         out.append({
             "type": "dataset", "source": "Zenodo",
             "title": md.get("title","(无标题)"),
             "doi": md.get("doi", it.get("doi","")),
             "authors": creators, "year": yr,
             "abstract": desc,
-            "file_count": len(it.get("files",[])),
+            "file_count": len(files),
+            "files": files,
             "url": it.get("links",{}).get("self_html", it.get("links",{}).get("self","")),
         })
-    log(f"Zenodo: 获取 {len(out)} 条")
+    log(f"Zenodo: 获取 {len(out)} 条 (含文件链接)")
     return out
 
 def crawl_kaggle(topic, max_results, creds):
@@ -14485,14 +14615,20 @@ def crawl_kaggle(topic, max_results, creds):
         results = kaggle.api.dataset_list(search=topic, max_size=max_results)
         out = []
         for ds in results[:max_results]:
+            ref = getattr(ds,"ref","")
+            # Kaggle 文件需要用 API 下载，这里标记延迟下载
+            files = []
+            if CONFIG.get("download_data_files") and ref:
+                files.append({"name": f"{ref.replace('/','_')}.zip", "url": f"kaggle://{ref}", "size": 0, "kaggle_ref": ref})
             out.append({
                 "type": "dataset", "source": "Kaggle",
                 "title": ds.title, "doi": "",
                 "authors": getattr(ds,"ownerName",""),
                 "year": None,
                 "abstract": getattr(ds,"subtitle","") or "",
-                "file_count": getattr(ds,"totalBytes",0),
-                "url": f"https://www.kaggle.com/{getattr(ds,'ref','')}",
+                "file_count": 1 if files else 0,
+                "files": files,
+                "url": f"https://www.kaggle.com/{ref}",
             })
         log(f"Kaggle: 获取 {len(out)} 条")
         return out
@@ -14513,15 +14649,26 @@ def crawl_who(topic, max_results):
         try:
             j = json.loads(r)
             for it in (j.get("value") or [])[:max_results]:
+                code = it.get("IndicatorCode","")
+                # WHO GHO 数据可直接下载为 CSV
+                files = []
+                if CONFIG.get("download_data_files") and code:
+                    files.append({
+                        "name": f"{code}.csv",
+                        "url": f"https://ghoapi.azureedge.net/api/{code}?$format=csv",
+                        "size": 0,
+                    })
                 out.append({
                     "type": "dataset", "source": "WHO",
                     "title": it.get("IndicatorName",""),
                     "doi": "", "authors": "WHO",
-                    "year": None, "abstract": it.get("IndicatorCode",""),
+                    "year": None, "abstract": code,
+                    "file_count": len(files),
+                    "files": files,
                     "url": "https://www.who.int/data/gho",
                 })
         except: pass
-    log(f"WHO: 获取 {len(out)} 条")
+    log(f"WHO: 获取 {len(out)} 条 (含文件链接)")
     return out
 
 def crawl_google_scholar(topic, max_results):
@@ -14683,12 +14830,16 @@ def save_csv(items, path):
     if not items:
         log(f"CSV 跳过（无数据）: {path}")
         return
-    keys = ["type","source","title","authors","journal","year","doi","pmid","abstract","url"]
+    keys = ["type","source","title","authors","journal","year","doi","pmid","abstract","url","file_count","files"]
     with open(path, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=keys, extrasaction="ignore")
         w.writeheader()
         for it in items:
-            w.writerow(it)
+            row = dict(it)
+            # 将文件列表转为可读字符串
+            fl = it.get("files") or []
+            row["files"] = "; ".join([f.get("name","") + (f" -> {f['local_path']}" if f.get("local_path") else "") for f in fl]) if fl else ""
+            w.writerow(row)
     log(f"CSV 已保存: {path}")
 
 def save_docx(topic, items, categories, llm_result, path):
@@ -14838,6 +14989,13 @@ def main():
     related = [it for it in deduped if is_mental_related(it.get("title","") + " " + it.get("abstract",""))]
     log(f"心理健康相关: {len(related)} / {len(deduped)}")
 
+    # ---- 下载实际数据文件 ----
+    dl_stat = {"downloaded": 0, "skipped": 0}
+    if CONFIG.get("download_data_files"):
+        ds_items = [i for i in related if i["type"] == "dataset"]
+        log(f"开始下载 {len(ds_items)} 个数据集的实际文件 ...")
+        dl_stat = download_dataset_files(related, out_dir)
+
     # ---- 自动分类 ----
     categories = auto_categorize(related)
     for cat, lst in categories.items():
@@ -14871,6 +15029,9 @@ def main():
     log(f"爬取完成！输出目录: {os.path.abspath(out_dir)}")
     log(f"  文献: {len(lit)} 条 | 数据集: {len(ds)} 条")
     log(f"  分类数: {len(categories)}")
+    if CONFIG.get("download_data_files"):
+        log(f"  数据文件下载: 成功 {dl_stat['downloaded']} 个，跳过/失败 {dl_stat['skipped']} 个")
+        log(f"  数据文件目录: {os.path.join(os.path.abspath(out_dir), 'data_files')}")
     log("=" * 60)
 
 if __name__ == "__main__":
@@ -14925,6 +15086,8 @@ function generateCrawlerScript(){
     '    "year_min": ' + yearMin + ',',
     '    "output_dir": "./crawl_output",',
     '    "output_format": ' + JSON.stringify(fmts) + ',',
+    '    "download_data_files": ' + (document.getElementById('c-dl-files').checked ? 'True' : 'False') + ',',
+    '    "max_file_size_mb": ' + (parseInt(document.getElementById('c-max-mb').value)||50) + ',',
     '    "use_llm_summary": ' + (useLLM ? 'True' : 'False') + ',',
     '    "siliconflow_key": ' + pyStr(sfKey) + ',',
     '    "llm_model": ' + pyStr(llmModel) + ',',
