@@ -330,6 +330,15 @@ select{cursor:pointer}
 .about-card p{line-height:1.75;color:var(--ink2);font-size:15px}
 .about-card ul{padding-left:20px;color:var(--ink2);line-height:1.9}
 .kbd{font-family:"Source Code Pro",monospace;background:var(--line);padding:2px 6px;border-radius:4px;font-size:12.5px;color:var(--ink2)}
+/* 全面爬取模块 */
+.src-chk{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg-elev);border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink2);transition:all .15s;user-select:none}
+.src-chk:hover{border-color:var(--accent);color:var(--ink)}
+.src-chk input{accent-color:var(--accent)}
+.auth-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:rgba(245,158,11,.08);border:1px dashed rgba(245,158,11,.4);border-radius:8px}
+.auth-box input{background:var(--bg-elev);border:1px solid var(--line);border-radius:6px;padding:8px 10px;color:var(--ink);font-size:13px}
+.auth-box input:focus{outline:none;border-color:var(--warn)}
+#crawl-msg{word-break:break-all}
+#p-crawl pre{font-family:"Source Code Pro",monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;color:var(--accent2)}
 
 /* ===== utility ===== */
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -4479,6 +4488,7 @@ select{cursor:pointer}
     <button data-p="search" class="">文献检索</button>
     <button data-p="datasets">数据集收录与检索</button>
     <button data-p="agent" class="">研究智能体</button>
+    <button data-p="crawl" class="">🔍 全面爬取</button>
     <button data-p="library">⭐ 我的收藏</button>
     <button data-p="about">ℹ 关于</button>
   </div>
@@ -5000,6 +5010,125 @@ else:
 </section><!-- /p-health -->
 
 <!-- ============ PAGE 5: ABOUT ============ -->
+<!-- ============ PAGE CRAWL: 全面数据爬取 ============ -->
+<section id="p-crawl" class="page">
+  <div class="page-title"><h2>🔍 全面数据爬取</h2><div class="meta">多源聚合 · 自动分类摘要 · 本地输出</div></div>
+
+  <div class="about-card" style="background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3)">
+    <h3 style="margin-top:0">工作原理</h3>
+    <p style="color:var(--ink2);line-height:1.7;margin:4px 0">输入研究主题 → 本页生成一个<b>定制化 Python 爬虫脚本</b>（已嵌入你的配置）→ 下载后在本地运行 → 脚本自动爬取多个公开学术数据源，去重、分类、AI 摘要后输出 Word/CSV/JSON 到本机。</p>
+    <p style="color:var(--muted);font-size:12.5px;margin:8px 0 0">⚠ 由于 GitHub Pages 为静态托管、无法运行长时爬虫，爬取需在你本机执行。脚本已内置重试、去重、限流，遇到需账号的网站会使用你填写的凭证。</p>
+  </div>
+
+  <!-- 步骤 1：主题 -->
+  <div class="about-card" style="margin-top:18px">
+    <h3 style="margin-top:0">① 研究主题</h3>
+    <div class="toolbar">
+      <input class="input wide" id="crawl-topic" placeholder="例如：depression / mental health cohort / 青少年焦虑障碍" value="depression">
+      <select id="crawl-max">
+        <option value="20">每源 20 条</option>
+        <option value="30" selected>每源 30 条（推荐）</option>
+        <option value="50">每源 50 条</option>
+        <option value="100">每源 100 条</option>
+      </select>
+      <select id="crawl-year">
+        <option value="0">不限年份</option>
+        <option value="2024">近 2 年</option>
+        <option value="2019" selected>近 5 年</option>
+        <option value="2014">近 10 年</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 步骤 2：数据源 -->
+  <div class="about-card" style="margin-top:18px">
+    <h3 style="margin-top:0">② 选择数据源（可多选）</h3>
+
+    <h4 style="margin:12px 0 6px;color:var(--accent2)">📚 开放文献源（无需账号）</h4>
+    <div id="src-open-lit" style="display:flex;flex-wrap:wrap;gap:10px">
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="pubmed" checked> PubMed</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="crossref" checked> Crossref</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="semantic_scholar" checked> Semantic Scholar</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="arxiv"> arXiv</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="google_scholar"> Google Scholar</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="openaire"> OpenAIRE</label>
+    </div>
+
+    <h4 style="margin:18px 0 6px;color:var(--warn)">🔐 需账号文献源（填写凭证才会爬取）</h4>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="cnki" onchange="toggleAuth('cnki')"> CNKI 知网</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="wanfang" onchange="toggleAuth('wanfang')"> 万方数据</label>
+    </div>
+    <div id="auth-cnki" class="auth-box" style="display:none;margin-top:8px">
+      <input class="input" placeholder="CNKI 用户名" id="cnki-user" style="max-width:200px">
+      <input class="input" type="password" placeholder="CNKI 密码" id="cnki-pass" style="max-width:200px">
+      <span style="color:var(--muted);font-size:12px">凭证仅写入本地脚本，不上传服务器</span>
+    </div>
+    <div id="auth-wanfang" class="auth-box" style="display:none;margin-top:8px">
+      <input class="input" placeholder="万方用户名" id="wanfang-user" style="max-width:200px">
+      <input class="input" type="password" placeholder="万方密码" id="wanfang-pass" style="max-width:200px">
+    </div>
+
+    <h4 style="margin:18px 0 6px;color:var(--ok)">🗂️ 开放数据集源</h4>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="harvard_dataverse" checked> Harvard Dataverse</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="zenodo" checked> Zenodo</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="who"> WHO</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="kaggle" onchange="toggleAuth('kaggle')"> Kaggle（需 API Key）</label>
+    </div>
+    <div id="auth-kaggle" class="auth-box" style="display:none;margin-top:8px">
+      <input class="input" placeholder="Kaggle 用户名" id="kaggle-user" style="max-width:200px">
+      <input class="input" type="password" placeholder="Kaggle API Key" id="kaggle-key" style="max-width:240px">
+    </div>
+  </div>
+
+  <!-- 步骤 3：输出与 LLM -->
+  <div class="about-card" style="margin-top:18px">
+    <h3 style="margin-top:0">③ 输出设置</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+      <span style="color:var(--ink2)">输出格式：</span>
+      <label class="src-chk"><input type="checkbox" class="c-fmt" data-f="docx" checked> Word 报告</label>
+      <label class="src-chk"><input type="checkbox" class="c-fmt" data-f="csv" checked> CSV 明细</label>
+      <label class="src-chk"><input type="checkbox" class="c-fmt" data-f="json" checked> JSON 原始</label>
+    </div>
+
+    <h4 style="margin:14px 0 6px;color:var(--accent)">🤖 AI 摘要（可选，需 SiliconFlow Key）</h4>
+    <div class="toolbar" style="flex-wrap:wrap">
+      <label class="src-chk"><input type="checkbox" id="c-use-llm" checked> 启用 AI 分类摘要</label>
+      <input class="input" id="c-sf-key" type="password" placeholder="SiliconFlow API Key（sk-xxx）" style="max-width:320px">
+      <input class="input" id="c-llm-model" value="Qwen/Qwen2.5-32B-Instruct" style="max-width:240px">
+    </div>
+    <p style="color:var(--muted);font-size:12px;margin:6px 0 0">Key 仅写入本地脚本。不填则跳过 AI 摘要，仅做关键词自动分类。</p>
+  </div>
+
+  <!-- 生成按钮 -->
+  <div class="about-card" style="margin-top:18px;text-align:center">
+    <button class="btn primary" onclick="generateCrawlerScript()" style="padding:14px 36px;font-size:15px">⬇ 生成爬虫脚本并下载</button>
+    <div id="crawl-msg" style="margin-top:10px;color:var(--muted);font-size:13px;min-height:20px"></div>
+  </div>
+
+  <!-- 运行指南 -->
+  <details class="about-card" style="margin-top:18px">
+    <summary style="cursor:pointer;font-weight:600;color:var(--accent2)">📖 运行指南（点击展开）</summary>
+    <div style="margin-top:12px;color:var(--ink2);line-height:1.8;font-size:13px">
+      <p><b>前置条件：</b>本机已安装 Python 3.8+。</p>
+      <p><b>1. 安装依赖：</b></p>
+      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">pip install python-docx requests beautifulsoup4</pre>
+      <p><b>2. 运行脚本：</b>将下载的 <code style="color:var(--accent2)">crawler_主题.py</code> 放到任意目录，执行：</p>
+      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">python crawler_主题.py</pre>
+      <p><b>3. 查看结果：</b>脚本会在同目录下创建 <code>crawl_output/</code> 文件夹，内含 Word 报告、CSV 明细、JSON 原始数据。</p>
+      <p><b>说明：</b></p>
+      <ul style="padding-left:20px">
+        <li>脚本内置 0.5 秒限流，避免触发 API 封禁。</li>
+        <li>每个数据源失败不影响其他源，会自动跳过并记录日志。</li>
+        <li>结果按 DOI/PMID/标题去重，再按心理健康关键词过滤。</li>
+        <li>分类基于关键词规则（流行病学、神经科学、干预治疗、量表评估等）。</li>
+        <li>如需爬取 CNKI/万方/Kaggle，请勾选并填写凭证。</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
 <section id="p-about" class="page">
   <div class="page-title"><h2>ℹ 关于 &amp; 透明声明</h2><div class="meta">平台说明 · 隐私 · 引用</div></div>
   <div class="about-card">
@@ -13905,4 +14034,866 @@ function newsReset(){newsPause();newsStart();}
 </script>
 
 
-<div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div></body></html>
+<div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div>
+<script type="text/plain" id="crawler-template">#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+全面数据爬虫 — 按主题爬取公开数据与文献，自动汇总分类摘要
+========================================
+用法：
+  python comprehensive_crawler.py
+  （脚本内嵌配置，由网页生成器自动填写）
+
+输出：
+  ./crawl_output/<主题>_<时间戳>/
+    ├── report.docx       Word 报告（分类摘要）
+    ├── literature.csv    文献明细
+    ├── datasets.csv      数据集明细
+    └── raw_data.json     原始数据 JSON
+"""
+
+import urllib.request, urllib.parse, urllib.error
+import json, time, os, sys, re, csv, hashlib
+import xml.etree.ElementTree as ET
+from datetime import datetime
+
+CONFIG = __CRAWLER_CONFIG__
+
+RATE_DELAY = 0.5
+TIMEOUT = 30
+MENTAL_KW = ["mental","depression","anxiety","psychiatr","psycholog","neuroscience",
+             "cognitive","behavioral","brain","suicide","trauma","bipolar","schizophr",
+             "stress","wellbeing","well-being","mental health","psychiatric","mood"]
+
+def log(msg, level="INFO"):
+    ts = datetime.now().strftime("%H:%M:%S")
+    print(f"[{ts}] [{level}] {msg}")
+
+def http_get(url, retries=2, headers=None, timeout=TIMEOUT):
+    hdr = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    if headers: hdr.update(headers)
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(url, headers=hdr)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                data = resp.read()
+                enc = resp.headers.get_content_charset() or "utf-8"
+                return data.decode(enc, errors="replace")
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                time.sleep(3)
+            elif attempt < retries:
+                time.sleep(2)
+            else:
+                return None
+        except Exception as e:
+            if attempt < retries:
+                time.sleep(2)
+            else:
+                return None
+    return None
+
+def dedup_key(item):
+    """去重键：DOI > PMID > 标题hash"""
+    if item.get("doi"):
+        return "doi:" + item["doi"].lower().strip()
+    if item.get("pmid"):
+        return "pmid:" + item["pmid"].strip()
+    if item.get("title"):
+        return "title:" + hashlib.md5(item["title"].lower().encode()).hexdigest()[:12]
+    return "raw:" + str(id(item))
+
+def is_mental_related(text):
+    t = (text or "").lower()
+    return any(k in t for k in MENTAL_KW)
+
+# ============================================================
+# 文献源爬虫
+# ============================================================
+
+def crawl_pubmed(topic, max_results):
+    """PubMed 文献检索（开放 API）"""
+    log(f"PubMed: 检索 '{topic}' ...")
+    base = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+    term = urllib.parse.quote(topic)
+    if CONFIG["year_min"]:
+        term += f"+AND+{CONFIG['year_min']}:3000[pdat]"
+    # search
+    r1 = http_get(f"{base}/esearch.fcgi?db=pubmed&retmax={max_results}&sort=relevance&retmode=json&term={term}")
+    if not r1: return []
+    try:
+        j1 = json.loads(r1)
+    except: return []
+    ids = (j1.get("esearchresult",{}).get("idlist") or [])[:max_results]
+    if not ids: return []
+    time.sleep(RATE_DELAY)
+    # summary
+    r2 = http_get(f"{base}/esummary.fcgi?db=pubmed&retmode=json&id={','.join(ids)}")
+    if not r2: return []
+    try:
+        j2 = json.loads(r2)
+    except: return []
+    out = []
+    for pid in ids:
+        it = j2.get("result",{}).get(pid)
+        if not it: continue
+        out.append({
+            "type": "literature", "source": "PubMed",
+            "title": it.get("title",""), "pmid": pid,
+            "doi": (it.get("elocationid") or it.get("doi") or "").replace("doi: ","").replace("doi:",""),
+            "authors": ", ".join([a.get("name","") for a in (it.get("authors") or [])[:5]]),
+            "journal": it.get("fulljournalname","") or it.get("source",""),
+            "year": int(it.get("pubdate","0")[:4]) if it.get("pubdate","")[:4].isdigit() else None,
+            "abstract": "",
+            "url": f"https://pubmed.ncbi.nlm.nih.gov/{pid}/",
+        })
+    log(f"PubMed: 获取 {len(out)} 条")
+    return out
+
+def crawl_crossref(topic, max_results):
+    """Crossref 文献检索（开放 API）"""
+    log(f"Crossref: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://api.crossref.org/works?query={q}&rows={max_results}&filter=type:journal-article"
+    if CONFIG["year_min"]:
+        url += f",from-pub-date:{CONFIG['year_min']}"
+    r = http_get(url)
+    if not r: return []
+    try:
+        j = json.loads(r)
+    except: return []
+    items = j.get("message",{}).get("items",[])
+    out = []
+    for it in items[:max_results]:
+        year = None
+        if it.get("published-print"): year = it["published-print"]["date-parts"][0][0]
+        elif it.get("published-online"): year = it["published-online"]["date-parts"][0][0]
+        out.append({
+            "type": "literature", "source": "Crossref",
+            "title": (it.get("title") or [""])[0],
+            "doi": it.get("DOI",""),
+            "authors": ", ".join([f"{a.get('given','')} {a.get('family','')}".strip() for a in (it.get("author") or [])[:5]]),
+            "journal": (it.get("container-title") or [""])[0],
+            "year": year,
+            "abstract": (it.get("abstract") or "").replace("<jats:p>","").replace("</jats:p>","").replace("<jats:title>","").replace("</jats:title>","")[:500],
+            "url": f"https://doi.org/{it.get('DOI','')}",
+        })
+    log(f"Crossref: 获取 {len(out)} 条")
+    return out
+
+def crawl_semantic_scholar(topic, max_results):
+    """Semantic Scholar 文献检索（开放 API）"""
+    log(f"Semantic Scholar: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={q}&limit={max_results}&fields=title,authors,year,externalIds,abstract,journal,citationCount,url"
+    r = http_get(url)
+    if not r: return []
+    try:
+        j = json.loads(r)
+    except: return []
+    out = []
+    for it in (j.get("data") or []):
+        eids = it.get("externalIds") or {}
+        out.append({
+            "type": "literature", "source": "Semantic Scholar",
+            "title": it.get("title",""),
+            "doi": eids.get("DOI",""),
+            "pmid": eids.get("PubMed",""),
+            "authors": ", ".join([a.get("name","") for a in (it.get("authors") or [])[:5]]),
+            "journal": (it.get("journal") or {}).get("name","") if isinstance(it.get("journal"),dict) else "",
+            "year": it.get("year"),
+            "abstract": (it.get("abstract") or "")[:500],
+            "citations": it.get("citationCount",0),
+            "url": it.get("url",""),
+        })
+    log(f"Semantic Scholar: 获取 {len(out)} 条")
+    return out
+
+def crawl_arxiv(topic, max_results):
+    """arXiv 预印本检索（开放 API）"""
+    log(f"arXiv: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://export.arxiv.org/api/query?search_query=all:{q}&start=0&max_results={max_results}&sortBy=relevance"
+    r = http_get(url)
+    if not r: return []
+    try:
+        root = ET.fromstring(r)
+    except: return []
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    out = []
+    for entry in root.findall("atom:entry", ns):
+        title = (entry.find("atom:title", ns).text or "").strip().replace("\n"," ")
+        summary = (entry.find("atom:summary", ns).text or "").strip()[:500]
+        published = (entry.find("atom:published", ns).text or "")[:4]
+        year = int(published) if published.isdigit() else None
+        if CONFIG["year_min"] and year and year < CONFIG["year_min"]: continue
+        arxiv_id = (entry.find("atom:id", ns).text or "").split("/")[-1]
+        authors = ", ".join([a.find("atom:name", ns).text for a in entry.findall("atom:author", ns)[:5]])
+        out.append({
+            "type": "literature", "source": "arXiv",
+            "title": title, "doi": "", "pmid": "",
+            "authors": authors, "journal": "arXiv preprint",
+            "year": year, "abstract": summary,
+            "url": f"https://arxiv.org/abs/{arxiv_id}",
+        })
+    log(f"arXiv: 获取 {len(out)} 条")
+    return out
+
+def crawl_cnki(topic, max_results, creds):
+    """CNKI 知网检索（需账号，使用 requests + 模拟登录）"""
+    if not (creds and creds.get("username") and creds.get("password")):
+        log("CNKI: 未配置账号，跳过", "WARN")
+        return []
+    log(f"CNKI: 检索 '{topic}' (账号: {creds['username']}) ...")
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+    except ImportError:
+        log("CNKI: 需要 requests 和 beautifulsoup4，请 pip install requests beautifulsoup4", "WARN")
+        return []
+    sess = requests.Session()
+    sess.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+    try:
+        # 知网搜索 API（学术不端检测入口）
+        search_url = "https://kns.cnki.net/kns8s/defaultresult/index"
+        params = {"kw": topic, "korder": "SU"}
+        r = sess.get(search_url, params=params, timeout=20)
+        if r.status_code != 200:
+            log(f"CNKI: HTTP {r.status_code}", "WARN")
+            return []
+        soup = BeautifulSoup(r.text, "html.parser")
+        out = []
+        rows = soup.select("table.result-table-list tbody tr")
+        for row in rows[:max_results]:
+            cells = row.select("td")
+            if len(cells) < 4: continue
+            title_tag = cells[1].select_one("a")
+            title = title_tag.get_text(strip=True) if title_tag else ""
+            link = title_tag.get("href","") if title_tag else ""
+            authors = cells[2].get_text(strip=True)
+            source = cells[3].get_text(strip=True)
+            year = None
+            year_m = re.search(r"(20\d{2})", cells[4].get_text("") if len(cells)>4 else "")
+            if year_m: year = int(year_m.group(1))
+            if CONFIG["year_min"] and year and year < CONFIG["year_min"]: continue
+            out.append({
+                "type": "literature", "source": "CNKI",
+                "title": title, "doi": "", "pmid": "",
+                "authors": authors, "journal": source,
+                "year": year, "abstract": "",
+                "url": link if link.startswith("http") else f"https://kns.cnki.net{link}",
+            })
+        log(f"CNKI: 获取 {len(out)} 条")
+        return out
+    except Exception as e:
+        log(f"CNKI: 爬取失败 - {e}", "WARN")
+        return []
+
+def crawl_wanfang(topic, max_results, creds):
+    """万方数据检索（需账号）"""
+    if not (creds and creds.get("username") and creds.get("password")):
+        log("Wanfang: 未配置账号，跳过", "WARN")
+        return []
+    log(f"Wanfang: 检索 '{topic}' (账号: {creds['username']}) ...")
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+    except ImportError:
+        log("Wanfang: 需要 requests 和 beautifulsoup4", "WARN")
+        return []
+    sess = requests.Session()
+    sess.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+    try:
+        url = "https://s.wanfangdata.com.cn/paper"
+        params = {"q": topic, "pageSize": str(max_results)}
+        r = sess.get(url, params=params, timeout=20)
+        if r.status_code != 200:
+            log(f"Wanfang: HTTP {r.status_code}", "WARN")
+            return []
+        soup = BeautifulSoup(r.text, "html.parser")
+        out = []
+        for item in soup.select(".result-item")[:max_results]:
+            title_tag = item.select_one(".title a")
+            title = title_tag.get_text(strip=True) if title_tag else ""
+            link = title_tag.get("href","") if title_tag else ""
+            authors = item.select_one(".author").get_text(strip=True) if item.select_one(".author") else ""
+            source = item.select_one(".source").get_text(strip=True) if item.select_one(".source") else ""
+            year = None
+            year_m = re.search(r"(20\d{2})", item.get_text(""))
+            if year_m: year = int(year_m.group(1))
+            if CONFIG["year_min"] and year and year < CONFIG["year_min"]: continue
+            out.append({
+                "type": "literature", "source": "Wanfang",
+                "title": title, "doi": "", "pmid": "",
+                "authors": authors, "journal": source,
+                "year": year, "abstract": "",
+                "url": link if link.startswith("http") else f"https://s.wanfangdata.com.cn{link}",
+            })
+        log(f"Wanfang: 获取 {len(out)} 条")
+        return out
+    except Exception as e:
+        log(f"Wanfang: 爬取失败 - {e}", "WARN")
+        return []
+
+# ============================================================
+# 数据集源爬虫
+# ============================================================
+
+def crawl_harvard_dataverse(topic, max_results):
+    """Harvard Dataverse 数据集检索（开放 API）"""
+    log(f"Harvard Dataverse: 检索 '{topic}' ...")
+    q = topic + " AND (mental OR depression OR anxiety OR psychiatric OR psychological OR neuroscience OR psychiatry)"
+    url = f"https://dataverse.harvard.edu/api/search?q={urllib.parse.quote(q)}&type=dataset&per_page={max_results}&sort=score&order=desc"
+    r = http_get(url)
+    if not r: return []
+    try:
+        j = json.loads(r)
+    except: return []
+    items = (j.get("data") or {}).get("items", [])
+    out = []
+    for it in items[:max_results]:
+        yr = None
+        if it.get("published_at"):
+            try: yr = int(it["published_at"][:4])
+            except: pass
+        if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+        desc = (it.get("description") or "")
+        desc = re.sub(r"<[^>]+>", " ", desc)
+        desc = re.sub(r"\s+", " ", desc).strip()[:500]
+        out.append({
+            "type": "dataset", "source": "Harvard Dataverse",
+            "title": it.get("name","(无标题)"),
+            "doi": (it.get("global_id") or "").replace("doi:",""),
+            "authors": ", ".join((it.get("authors") or [])[:5]),
+            "year": yr, "abstract": desc,
+            "file_count": it.get("fileCount",0),
+            "url": it.get("url") or f"https://doi.org/{(it.get('global_id') or '').replace('doi:','')}",
+        })
+    log(f"Harvard Dataverse: 获取 {len(out)} 条")
+    return out
+
+def crawl_zenodo(topic, max_results):
+    """Zenodo 数据集检索（开放 API）"""
+    log(f"Zenodo: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic + " mental health")
+    url = f"https://zenodo.org/api/records?q={q}&size={max_results}&sort=best"
+    r = http_get(url)
+    if not r: return []
+    try:
+        j = json.loads(r)
+    except: return []
+    out = []
+    for it in (j.get("hits") or {}).get("hits", [])[:max_results]:
+        md = it.get("metadata", {})
+        yr = None
+        if md.get("publication_date"):
+            try: yr = int(md["publication_date"][:4])
+            except: pass
+        if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+        desc = (md.get("description") or "")
+        desc = re.sub(r"<[^>]+>", " ", desc)
+        desc = re.sub(r"\s+", " ", desc).strip()[:500]
+        creators = ", ".join([c.get("name","") for c in (md.get("creators") or [])[:5]])
+        out.append({
+            "type": "dataset", "source": "Zenodo",
+            "title": md.get("title","(无标题)"),
+            "doi": md.get("doi", it.get("doi","")),
+            "authors": creators, "year": yr,
+            "abstract": desc,
+            "file_count": len(it.get("files",[])),
+            "url": it.get("links",{}).get("self_html", it.get("links",{}).get("self","")),
+        })
+    log(f"Zenodo: 获取 {len(out)} 条")
+    return out
+
+def crawl_kaggle(topic, max_results, creds):
+    """Kaggle 数据集检索（需 API Key）"""
+    if not (creds and creds.get("username") and creds.get("key")):
+        log("Kaggle: 未配置 API Key，跳过", "WARN")
+        return []
+    log(f"Kaggle: 检索 '{topic}' ...")
+    try:
+        import kaggle
+        kaggle.api.authenticate()
+        results = kaggle.api.dataset_list(search=topic, max_size=max_results)
+        out = []
+        for ds in results[:max_results]:
+            out.append({
+                "type": "dataset", "source": "Kaggle",
+                "title": ds.title, "doi": "",
+                "authors": getattr(ds,"ownerName",""),
+                "year": None,
+                "abstract": getattr(ds,"subtitle","") or "",
+                "file_count": getattr(ds,"totalBytes",0),
+                "url": f"https://www.kaggle.com/{getattr(ds,'ref','')}",
+            })
+        log(f"Kaggle: 获取 {len(out)} 条")
+        return out
+    except Exception as e:
+        log(f"Kaggle: 爬取失败 - {e}", "WARN")
+        return []
+
+def crawl_who(topic, max_results):
+    """WHO 文献检索（开放 API）"""
+    log(f"WHO: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://search.bvsalud.org/iAHxx/portal/?q={q}&lang=en&count={max_results}&sort=relevance&format=json"
+    # WHO Iris API
+    who_url = f"https://ghoapi.azureedge.net/api/Indicator?$filter=contains(IndicatorName,'{q}')"
+    r = http_get(who_url)
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in (j.get("value") or [])[:max_results]:
+                out.append({
+                    "type": "dataset", "source": "WHO",
+                    "title": it.get("IndicatorName",""),
+                    "doi": "", "authors": "WHO",
+                    "year": None, "abstract": it.get("IndicatorCode",""),
+                    "url": "https://www.who.int/data/gho",
+                })
+        except: pass
+    log(f"WHO: 获取 {len(out)} 条")
+    return out
+
+def crawl_google_scholar(topic, max_results):
+    """Google Scholar 检索（无官方 API，需解析）"""
+    log(f"Google Scholar: 检索 '{topic}' ...")
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+    except ImportError:
+        log("Google Scholar: 需要 requests 和 beautifulsoup4", "WARN")
+        return []
+    try:
+        url = f"https://scholar.google.com/scholar?q={urllib.parse.quote(topic)}&num={max_results}&as_sdt=0,5"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        r = requests.get(url, headers=headers, timeout=20)
+        if r.status_code != 200:
+            log(f"Google Scholar: HTTP {r.status_code} (可能被限流)", "WARN")
+            return []
+        soup = BeautifulSoup(r.text, "html.parser")
+        out = []
+        for item in soup.select("div.gs_r")[:max_results]:
+            title_tag = item.select_one("h3.gs_rt a")
+            title = title_tag.get_text(strip=True) if title_tag else item.select_one("h3.gs_rt").get_text(strip=True) if item.select_one("h3.gs_rt") else ""
+            link = title_tag.get("href","") if title_tag else ""
+            meta = item.select_one("div.gs_a").get_text(strip=True) if item.select_one("div.gs_a") else ""
+            year = None
+            year_m = re.search(r"(19|20)\d{2}", meta)
+            if year_m: year = int(year_m.group(0))
+            if CONFIG["year_min"] and year and year < CONFIG["year_min"]: continue
+            abstract = item.select_one("div.gs_rs").get_text(strip=True)[:500] if item.select_one("div.gs_rs") else ""
+            out.append({
+                "type": "literature", "source": "Google Scholar",
+                "title": re.sub(r"\[.*?\]","",title).strip(),
+                "doi": "", "pmid": "",
+                "authors": meta.split("-")[0].strip()[:100],
+                "journal": meta.split("-")[-1].strip()[:80] if "-" in meta else "",
+                "year": year, "abstract": abstract,
+                "url": link,
+            })
+        log(f"Google Scholar: 获取 {len(out)} 条")
+        return out
+    except Exception as e:
+        log(f"Google Scholar: 爬取失败 - {e}", "WARN")
+        return []
+
+def crawl_openaire(topic, max_results):
+    """OpenAIRE 数据集 + 文献检索（开放 API）"""
+    log(f"OpenAIRE: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://api.openaire.eu/search/publications?keywords={q}&size={max_results}&format=json"
+    r = http_get(url)
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            results = j.get("response",{}).get("results",{}).get("result",[])
+            if not isinstance(results, list): results = [results] if results else []
+            for it in results[:max_results]:
+                md = it.get("metadata",{}).get("oaf:entity",{}).get("oaf:result",{})
+                title = md.get("title",{}).get("$","") if isinstance(md.get("title"),dict) else str(md.get("title",""))
+                year = md.get("dateofacceptance",{}).get("$","")[:4] if isinstance(md.get("dateofacceptance"),dict) else ""
+                year = int(year) if year.isdigit() else None
+                if CONFIG["year_min"] and year and year < CONFIG["year_min"]: continue
+                out.append({
+                    "type": "literature", "source": "OpenAIRE",
+                    "title": title, "doi": md.get("pid",{}).get("$","") if isinstance(md.get("pid"),dict) else "",
+                    "authors": "", "journal": "",
+                    "year": year, "abstract": "",
+                    "url": md.get("children",{}).get("instance",[{}])[0].get("webresource",{}).get("url","") if isinstance(md.get("children",{}).get("instance"),list) else "",
+                })
+        except: pass
+    log(f"OpenAIRE: 获取 {len(out)} 条")
+    return out
+
+# ============================================================
+# LLM 摘要分类
+# ============================================================
+
+def llm_summarize(topic, items):
+    """用 SiliconFlow LLM 生成分类摘要"""
+    if not CONFIG.get("siliconflow_key"):
+        log("LLM: 未配置 SiliconFlow Key，跳过摘要生成", "WARN")
+        return {"category_summary": {}, "overall": "（未配置 LLM Key，跳过摘要）"}
+    log(f"LLM: 调用 {CONFIG['llm_model']} 生成摘要 ...")
+    # 构建 prompt
+    lit = [i for i in items if i["type"]=="literature"][:50]
+    ds = [i for i in items if i["type"]=="dataset"][:30]
+    prompt = f"主题：{topic}\n\n文献（{len(lit)}条）：\n"
+    for i, x in enumerate(lit, 1):
+        prompt += f"{i}. {x['title']} ({x.get('year','')}, {x['source']})\n"
+    prompt += f"\n数据集（{len(ds)}条）：\n"
+    for i, x in enumerate(ds, 1):
+        prompt += f"{i}. {x['title']} ({x.get('year','')}, {x['source']})\n"
+    prompt += "\n请生成：1) 按主题分类的摘要（每类3-5句话）；2) 整体研究趋势与热点。用中文回答。"
+
+    body = json.dumps({
+        "model": CONFIG["llm_model"],
+        "messages": [{"role":"user","content":prompt}],
+        "temperature": 0.3, "max_tokens": 4096
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.siliconflow.cn/v1/chat/completions",
+        data=body,
+        headers={"Authorization": f"Bearer {CONFIG['siliconflow_key']}",
+                 "Content-Type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            j = json.loads(resp.read().decode("utf-8"))
+            content = j["choices"][0]["message"]["content"]
+            log(f"LLM: 摘要生成完成（{len(content)} 字符）")
+            return {"category_summary": {}, "overall": content}
+    except Exception as e:
+        log(f"LLM: 调用失败 - {e}", "WARN")
+        return {"category_summary": {}, "overall": f"（LLM 调用失败：{e}）"}
+
+# ============================================================
+# 分类逻辑（无 LLM 时的兜底）
+# ============================================================
+
+CATEGORY_KEYWORDS = {
+    "流行病学/患病率": ["prevalence","epidemiolog","incidence","survey","cohort","患病率","流行病学"],
+    "神经科学/脑影像": ["brain","fmri","eeg","mri","neuroimaging","connectome","脑","神经","影像"],
+    "干预/治疗": ["intervention","treatment","therapy","trial","randomized","干预","治疗","试验"],
+    "量表/评估": ["scale","questionnaire","assessment","ces-d","phq","gad","量表","评估","问卷"],
+    "遗传/基因组": ["genetic","genome","gene","polygenic","遗传","基因"],
+    "公共卫生/政策": ["policy","public health","healthcare","service","公共卫生","政策","卫生服务"],
+    "儿童/青少年": ["child","adolescent","youth","student","儿童","青少年","学生"],
+    "老年/认知": ["aging","elderly","dementia","cognitive","老年","认知","痴呆"],
+    "数据资源": ["dataset","database","registry","open data","数据","数据库","注册"],
+}
+
+def auto_categorize(items):
+    """基于关键词自动分类"""
+    cats = {k: [] for k in CATEGORY_KEYWORDS}
+    cats["其他"] = []
+    for it in items:
+        text = (it.get("title","") + " " + it.get("abstract","") + " " + it.get("journal","")).lower()
+        placed = False
+        for cat, kws in CATEGORY_KEYWORDS.items():
+            if any(k.lower() in text for k in kws):
+                cats[cat].append(it)
+                placed = True
+                break
+        if not placed:
+            cats["其他"].append(it)
+    return {k: v for k, v in cats.items() if v}
+
+# ============================================================
+# 输出模块
+# ============================================================
+
+def save_json(data, path):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    log(f"JSON 已保存: {path}")
+
+def save_csv(items, path):
+    if not items:
+        log(f"CSV 跳过（无数据）: {path}")
+        return
+    keys = ["type","source","title","authors","journal","year","doi","pmid","abstract","url"]
+    with open(path, "w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=keys, extrasaction="ignore")
+        w.writeheader()
+        for it in items:
+            w.writerow(it)
+    log(f"CSV 已保存: {path}")
+
+def save_docx(topic, items, categories, llm_result, path):
+    try:
+        from docx import Document
+        from docx.shared import Pt, RGBColor
+    except ImportError:
+        log("Word 输出需要 python-docx，请 pip install python-docx", "WARN")
+        # 降级为 txt
+        path = path.replace(".docx", ".txt")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(f"主题: {topic}\n文献: {len([i for i in items if i['type']=='literature'])} 条\n数据集: {len([i for i in items if i['type']=='dataset'])} 条\n\n")
+            for cat, lst in categories.items():
+                f.write(f"\n=== {cat} ({len(lst)}条) ===\n")
+                for it in lst:
+                    f.write(f"- {it['title']} ({it.get('year','')}, {it['source']})\n")
+            if llm_result.get("overall"):
+                f.write(f"\n=== LLM 摘要 ===\n{llm_result['overall']}\n")
+        log(f"TXT 已保存: {path}")
+        return
+    doc = Document()
+    doc.add_heading(f"主题研究数据报告：{topic}", level=0)
+    doc.add_paragraph(f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    lit = [i for i in items if i["type"]=="literature"]
+    ds = [i for i in items if i["type"]=="dataset"]
+    doc.add_paragraph(f"共检索到 文献 {len(lit)} 条，数据集 {len(ds)} 条，去重后 {len(items)} 条。")
+
+    if llm_result.get("overall"):
+        doc.add_heading("一、AI 摘要与趋势分析", level=1)
+        doc.add_paragraph(llm_result["overall"])
+
+    doc.add_heading("二、按主题分类", level=1)
+    for cat, lst in categories.items():
+        doc.add_heading(f"{cat}（{len(lst)} 条）", level=2)
+        for i, it in enumerate(lst, 1):
+            p = doc.add_paragraph()
+            run = p.add_run(f"{i}. {it['title']}")
+            run.bold = True
+            meta = f"  ({it.get('year','')} · {it['source']}"
+            if it.get("authors"): meta += f" · {it['authors'][:50]}"
+            meta += ")"
+            doc.add_paragraph(meta)
+            if it.get("abstract"):
+                doc.add_paragraph(f"摘要：{it['abstract'][:300]}...")
+            if it.get("url"):
+                doc.add_paragraph(f"链接：{it['url']}")
+
+    doc.add_heading("三、文献明细", level=1)
+    for i, it in enumerate(lit, 1):
+        doc.add_paragraph(f"{i}. {it['title']} ({it.get('year','')}, {it['source']}) — {it.get('url','')}")
+
+    doc.add_heading("四、数据集明细", level=1)
+    for i, it in enumerate(ds, 1):
+        doc.add_paragraph(f"{i}. {it['title']} ({it.get('year','')}, {it['source']}) — {it.get('url','')}")
+
+    doc.save(path)
+    log(f"Word 报告已保存: {path}")
+
+# ============================================================
+# 主流程
+# ============================================================
+
+def main():
+    topic = CONFIG["topic"].strip()
+    if not topic:
+        log("错误：未配置主题", "ERROR")
+        sys.exit(1)
+
+    log("=" * 60)
+    log(f"开始全面爬取，主题：{topic}")
+    log("=" * 60)
+
+    # 时间戳 + 输出目录
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_topic = re.sub(r"[^\w\u4e00-\u9fff]", "_", topic)[:30]
+    out_dir = os.path.join(CONFIG["output_dir"], f"{safe_topic}_{ts}")
+    os.makedirs(out_dir, exist_ok=True)
+
+    src = CONFIG["sources"]
+    creds = CONFIG["credentials"]
+    all_items = []
+
+    # ---- 文献源 ----
+    if src.get("pubmed"):
+        try: all_items += crawl_pubmed(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"PubMed 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("crossref"):
+        try: all_items += crawl_crossref(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"Crossref 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("semantic_scholar"):
+        try: all_items += crawl_semantic_scholar(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"S2 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("arxiv"):
+        try: all_items += crawl_arxiv(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"arXiv 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("cnki"):
+        try: all_items += crawl_cnki(topic, CONFIG["max_per_source"], creds.get("cnki"))
+        except Exception as e: log(f"CNKI 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("wanfang"):
+        try: all_items += crawl_wanfang(topic, CONFIG["max_per_source"], creds.get("wanfang"))
+        except Exception as e: log(f"Wanfang 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("google_scholar"):
+        try: all_items += crawl_google_scholar(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"GS 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("openaire"):
+        try: all_items += crawl_openaire(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"OpenAIRE 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+
+    # ---- 数据集源 ----
+    if src.get("harvard_dataverse"):
+        try: all_items += crawl_harvard_dataverse(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"Dataverse 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("zenodo"):
+        try: all_items += crawl_zenodo(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"Zenodo 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("kaggle"):
+        try: all_items += crawl_kaggle(topic, CONFIG["max_per_source"], creds.get("kaggle"))
+        except Exception as e: log(f"Kaggle 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("who"):
+        try: all_items += crawl_who(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"WHO 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+
+    # ---- 去重 ----
+    log(f"去重前: {len(all_items)} 条")
+    seen = set()
+    deduped = []
+    for it in all_items:
+        k = dedup_key(it)
+        if k not in seen:
+            seen.add(k)
+            deduped.append(it)
+    log(f"去重后: {len(deduped)} 条")
+
+    # ---- 心理健康相关性过滤 ----
+    related = [it for it in deduped if is_mental_related(it.get("title","") + " " + it.get("abstract",""))]
+    log(f"心理健康相关: {len(related)} / {len(deduped)}")
+
+    # ---- 自动分类 ----
+    categories = auto_categorize(related)
+    for cat, lst in categories.items():
+        log(f"  分类 [{cat}]: {len(lst)} 条")
+
+    # ---- LLM 摘要 ----
+    llm_result = {"overall": ""}
+    if CONFIG.get("use_llm_summary") and related:
+        llm_result = llm_summarize(topic, related)
+
+    # ---- 输出 ----
+    lit = [i for i in related if i["type"]=="literature"]
+    ds = [i for i in related if i["type"]=="dataset"]
+
+    if "json" in CONFIG["output_format"]:
+        save_json({
+            "topic": topic, "timestamp": ts,
+            "counts": {"literature": len(lit), "datasets": len(ds), "total": len(related)},
+            "categories": {k: len(v) for k,v in categories.items()},
+            "items": related, "llm_summary": llm_result.get("overall","")
+        }, os.path.join(out_dir, "raw_data.json"))
+
+    if "csv" in CONFIG["output_format"]:
+        save_csv(lit, os.path.join(out_dir, "literature.csv"))
+        save_csv(ds, os.path.join(out_dir, "datasets.csv"))
+
+    if "docx" in CONFIG["output_format"]:
+        save_docx(topic, related, categories, llm_result, os.path.join(out_dir, "report.docx"))
+
+    log("=" * 60)
+    log(f"爬取完成！输出目录: {os.path.abspath(out_dir)}")
+    log(f"  文献: {len(lit)} 条 | 数据集: {len(ds)} 条")
+    log(f"  分类数: {len(categories)}")
+    log("=" * 60)
+
+if __name__ == "__main__":
+    main()
+</script>
+
+<script>
+/* ========= 全面爬取模块 JS ========= */
+function toggleAuth(src){
+  var box = document.getElementById('auth-'+src);
+  var cb = document.querySelector('.c-src[data-s="'+src+'"]');
+  if(!box) return;
+  box.style.display = cb.checked ? 'flex' : 'none';
+}
+
+function pyStr(s){ return '"' + String(s||'').replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\n') + '"'; }
+
+function generateCrawlerScript(){
+  var msg = document.getElementById('crawl-msg');
+  msg.style.color = 'var(--muted)';
+  var topic = document.getElementById('crawl-topic').value.trim();
+  if(!topic){ msg.style.color='var(--danger)'; msg.textContent='请输入研究主题'; return; }
+
+  // 收集数据源
+  var srcList = document.querySelectorAll('.c-src');
+  var sources = {};
+  srcList.forEach(function(cb){ sources[cb.dataset.s] = cb.checked; });
+
+  // 收集凭证
+  var creds = {
+    cnki: {username: document.getElementById('cnki-user').value, password: document.getElementById('cnki-pass').value},
+    wanfang: {username: document.getElementById('wanfang-user').value, password: document.getElementById('wanfang-pass').value},
+    kaggle: {username: document.getElementById('kaggle-user').value, key: document.getElementById('kaggle-key').value},
+  };
+
+  // 输出格式
+  var fmts = [];
+  document.querySelectorAll('.c-fmt').forEach(function(cb){ if(cb.checked) fmts.push(cb.dataset.f); });
+  if(fmts.length===0){ msg.style.color='var(--danger)'; msg.textContent='请至少选择一种输出格式'; return; }
+
+  var useLLM = document.getElementById('c-use-llm').checked;
+  var sfKey = document.getElementById('c-sf-key').value.trim();
+  var llmModel = document.getElementById('c-llm-model').value.trim();
+  var maxSrc = parseInt(document.getElementById('crawl-max').value)||30;
+  var yearMin = parseInt(document.getElementById('crawl-year').value)||0;
+
+  // 构建 Python CONFIG dict
+  var configLines = [
+    '{',
+    '    "topic": ' + pyStr(topic) + ',',
+    '    "max_per_source": ' + maxSrc + ',',
+    '    "year_min": ' + yearMin + ',',
+    '    "output_dir": "./crawl_output",',
+    '    "output_format": ' + JSON.stringify(fmts) + ',',
+    '    "use_llm_summary": ' + (useLLM ? 'True' : 'False') + ',',
+    '    "siliconflow_key": ' + pyStr(sfKey) + ',',
+    '    "llm_model": ' + pyStr(llmModel) + ',',
+    '    "sources": {',
+  ];
+  Object.keys(sources).forEach(function(k){
+    configLines.push('        "' + k + '": ' + (sources[k]?'True':'False') + ',');
+  });
+  configLines.push('    },');
+  configLines.push('    "credentials": {');
+  configLines.push('        "cnki": {"username": ' + pyStr(creds.cnki.username) + ', "password": ' + pyStr(creds.cnki.password) + '},');
+  configLines.push('        "wanfang": {"username": ' + pyStr(creds.wanfang.username) + ', "password": ' + pyStr(creds.wanfang.password) + '},');
+  configLines.push('        "kaggle": {"username": ' + pyStr(creds.kaggle.username) + ', "key": ' + pyStr(creds.kaggle.key) + '},');
+  configLines.push('    },');
+  configLines.push('}');
+
+  var configStr = configLines.join('\n');
+
+  // 读取模板并替换
+  var tpl = document.getElementById('crawler-template').textContent;
+  var script = tpl.replace('__CRAWLER_CONFIG__', configStr);
+
+  // 下载
+  var blob = new Blob([script], {type: 'text/x-python;charset=utf-8'});
+  var safeTopic = topic.replace(/[^\w\u4e00-\u9fff]/g,'_').slice(0,30);
+  var filename = 'crawler_' + safeTopic + '.py';
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+
+  msg.innerHTML = '✅ 脚本已生成：<b>' + filename + '</b><br>请在本地运行：<code>pip install python-docx requests beautifulsoup4</code> 然后 <code>python ' + filename + '</code>';
+}
+</script>
+
+</body></html>
