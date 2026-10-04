@@ -5107,11 +5107,78 @@ else:
     <div id="crawl-msg" style="margin-top:10px;color:var(--muted);font-size:13px;min-height:20px"></div>
   </div>
 
+  <!-- Python 安装引导 -->
+  <details class="about-card" style="margin-top:18px">
+    <summary style="cursor:pointer;font-weight:600;color:var(--warn)">🐍 本地没有 Python？点此查看安装引导</summary>
+    <div style="margin-top:12px;color:var(--ink2);line-height:1.8;font-size:13px">
+
+      <p><b>第 0 步：先检查是否已安装</b></p>
+      <p>按下 <code>Win + R</code>，输入 <code>cmd</code> 回车，在黑窗口中输入：</p>
+      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">python --version</pre>
+      <p>若显示 <code>Python 3.8.x</code> 或更高版本 → 已安装，跳到第 3 步。<br>
+      若显示「不是内部或外部命令」→ 未安装，继续第 1 步。</p>
+      <p style="color:var(--muted);font-size:12px">⚠ 若提示跳到 Microsoft Store 或显示「WindowsApps」占位符，见底部「常见问题」。</p>
+
+      <hr style="border-color:var(--line);margin:14px 0">
+
+      <p><b>第 1 步：下载 Python（二选一）</b></p>
+      <p><b>方案 A：官方安装版（推荐，有管理员权限）</b></p>
+      <ul style="padding-left:20px">
+        <li>官方地址：<a href="https://www.python.org/downloads/" target="_blank" style="color:var(--accent2)">python.org/downloads</a></li>
+        <li>国内镜像（速度更快）：<a href="https://mirrors.huaweicloud.com/python/" target="_blank" style="color:var(--accent2)">华为云镜像</a> ｜ <a href="https://mirrors.aliyun.com/python/" target="_blank" style="color:var(--accent2)">阿里云镜像</a></li>
+        <li>选择 <code>Python 3.11.x</code> 或 <code>3.12.x</code>，下载 <b>Windows installer (64-bit)</b></li>
+      </ul>
+      <p><b>方案 B：便携版（无管理员权限 / 装到U盘）</b></p>
+      <ul style="padding-left:20px">
+        <li>下载 <code>Windows embeddable package (64-bit)</code>（.zip 压缩包）</li>
+        <li>解压到任意文件夹（如 <code>D:\Python311\</code> 或 U盘）</li>
+        <li>便携版默认不含 pip，需额外安装（见下方）</li>
+      </ul>
+
+      <p><b>第 2 步：安装（方案 A）</b></p>
+      <ol style="padding-left:20px">
+        <li>双击下载的 <code>.exe</code> 安装程序</li>
+        <li><b style="color:var(--warn)">务必勾选底部「Add Python to PATH」</b>（非常重要！）</li>
+        <li>点击「Install Now」等待完成</li>
+      </ol>
+
+      <p><b>第 2 步（备选）：安装（方案 B 便携版 + pip）</b></p>
+      <p>解压后，在解压目录打开命令行（地址栏输入 <code>cmd</code> 回车），执行：</p>
+      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">python -m ensurepip --upgrade</pre>
+      <p>若失败，可下载 <a href="https://bootstrap.pypa.io/get-pip.py" target="_blank" style="color:var(--accent2)">get-pip.py</a> 放到同目录后执行 <code>python get-pip.py</code>。</p>
+
+      <hr style="border-color:var(--line);margin:14px 0">
+
+      <p><b>第 3 步：安装爬虫依赖</b></p>
+      <p>打开新的命令行窗口（<code>cmd</code>），执行：</p>
+      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">pip install python-docx requests beautifulsoup4</pre>
+      <p>国内网络较慢可换清华源：</p>
+      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">pip install -i https://pypi.tuna.tsinghua.edu.cn/simple python-docx requests beautifulsoup4</pre>
+
+      <p><b>第 4 步：验证安装</b></p>
+      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">python --version<br>pip --version</pre>
+      <p>两个命令都显示版本号即安装成功，可以回到上方生成爬虫脚本运行了。</p>
+
+      <hr style="border-color:var(--line);margin:14px 0">
+
+      <p><b>❓ 常见问题</b></p>
+      <p><b>Q1：输入 python 跳到 Microsoft Store？</b><br>
+      这是 Windows 的「应用执行别名」占位符。解决：设置 → 应用 → 高级应用设置 → 应用执行别名 → 关闭 <code>python.exe</code> 和 <code>python3.exe</code>。</p>
+      <p><b>Q2：pip 命令找不到？</b><br>
+      方案 A 用户：重新运行安装程序，选择「Modify」→ 勾选「pip」；或用 <code>python -m pip install ...</code> 代替 <code>pip install ...</code>。<br>
+      方案 B 用户：见上方便携版 pip 安装步骤。</p>
+      <p><b>Q3：提示「需要管理员权限」？</b><br>
+      使用方案 B 便携版，解压到非系统盘目录即可，无需管理员权限。</p>
+      <p><b>Q4：下载速度慢或打不开？</b><br>
+      优先用国内镜像（华为云/阿里云）；pip 安装用清华源。</p>
+    </div>
+  </details>
+
   <!-- 运行指南 -->
   <details class="about-card" style="margin-top:18px">
     <summary style="cursor:pointer;font-weight:600;color:var(--accent2)">📖 运行指南（点击展开）</summary>
     <div style="margin-top:12px;color:var(--ink2);line-height:1.8;font-size:13px">
-      <p><b>前置条件：</b>本机已安装 Python 3.8+。</p>
+      <p><b>前置条件：</b>本机已安装 Python 3.8+。<span style="color:var(--warn)">未安装请先看上方「🐍 Python 安装引导」。</span></p>
       <p><b>1. 安装依赖：</b></p>
       <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">pip install python-docx requests beautifulsoup4</pre>
       <p><b>2. 运行脚本：</b>将下载的 <code style="color:var(--accent2)">crawler_主题.py</code> 放到任意目录，执行：</p>
@@ -14892,7 +14959,7 @@ function generateCrawlerScript(){
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 
-  msg.innerHTML = '✅ 脚本已生成：<b>' + filename + '</b><br>请在本地运行：<code>pip install python-docx requests beautifulsoup4</code> 然后 <code>python ' + filename + '</code>';
+  msg.innerHTML = '✅ 脚本已生成：<b>' + filename + '</b><br>请在本地运行：<code>pip install python-docx requests beautifulsoup4</code> 然后 <code>python ' + filename + '</code><br><span style="color:var(--warn)">本地未安装 Python？请展开下方「🐍 Python 安装引导」按步骤操作。</span>';
 }
 </script>
 
