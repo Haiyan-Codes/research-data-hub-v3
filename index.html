@@ -5101,13 +5101,13 @@ else:
     </div>
     <p style="color:var(--muted);font-size:12px;margin:6px 0 0">勾选后会自动下载 Harvard Dataverse / Zenodo / WHO / Kaggle 等数据集的原始数据文件，存放在输出目录的 <code>data_files/</code> 子文件夹中。</p>
 
-    <h4 style="margin:14px 0 6px;color:var(--accent)">🤖 AI 摘要（可选，需 SiliconFlow Key）</h4>
+    <h4 style="margin:14px 0 6px;color:var(--accent)">🤖 AI 摘要（可选，需阿里云千问 Key）</h4>
     <div class="toolbar" style="flex-wrap:wrap">
       <label class="src-chk"><input type="checkbox" id="c-use-llm" checked> 启用 AI 分类摘要</label>
-      <input class="input" id="c-sf-key" type="password" placeholder="SiliconFlow API Key（sk-xxx）" style="max-width:320px">
-      <input class="input" id="c-llm-model" value="Qwen/Qwen2.5-32B-Instruct" style="max-width:240px">
+      <input class="input" id="c-dashscope-key" type="password" placeholder="千问 API Key（sk-xxx）" style="max-width:320px">
+      <input class="input" id="c-llm-model" value="qwen-plus" style="max-width:200px" title="可选 qwen-turbo / qwen-plus / qwen-max">
     </div>
-    <p style="color:var(--muted);font-size:12px;margin:6px 0 0">Key 仅写入本地脚本。不填则跳过 AI 摘要，仅做关键词自动分类。</p>
+    <p style="color:var(--muted);font-size:12px;margin:6px 0 0">Key 仅写入本地脚本。不填则跳过 AI 摘要，仅做关键词自动分类。Key 获取：<a href="https://dashscope.console.aliyun.com/apiKey" target="_blank" style="color:var(--accent2)">阿里云百炼控制台</a></p>
   </div>
 
   <!-- 生成按钮 -->
@@ -14748,11 +14748,11 @@ def crawl_openaire(topic, max_results):
 # ============================================================
 
 def llm_summarize(topic, items):
-    """用 SiliconFlow LLM 生成分类摘要"""
-    if not CONFIG.get("siliconflow_key"):
-        log("LLM: 未配置 SiliconFlow Key，跳过摘要生成", "WARN")
+    """用阿里云千问（DashScope）LLM 生成分类摘要"""
+    if not CONFIG.get("dashscope_key"):
+        log("LLM: 未配置千问 API Key，跳过摘要生成", "WARN")
         return {"category_summary": {}, "overall": "（未配置 LLM Key，跳过摘要）"}
-    log(f"LLM: 调用 {CONFIG['llm_model']} 生成摘要 ...")
+    log(f"LLM: 调用千问 {CONFIG['llm_model']} 生成摘要 ...")
     # 构建 prompt
     lit = [i for i in items if i["type"]=="literature"][:50]
     ds = [i for i in items if i["type"]=="dataset"][:30]
@@ -14770,9 +14770,9 @@ def llm_summarize(topic, items):
         "temperature": 0.3, "max_tokens": 4096
     }).encode("utf-8")
     req = urllib.request.Request(
-        "https://api.siliconflow.cn/v1/chat/completions",
+        "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
         data=body,
-        headers={"Authorization": f"Bearer {CONFIG['siliconflow_key']}",
+        headers={"Authorization": f"Bearer {CONFIG['dashscope_key']}",
                  "Content-Type": "application/json"}
     )
     try:
@@ -15073,7 +15073,7 @@ function generateCrawlerScript(){
   if(fmts.length===0){ msg.style.color='var(--danger)'; msg.textContent='请至少选择一种输出格式'; return; }
 
   var useLLM = document.getElementById('c-use-llm').checked;
-  var sfKey = document.getElementById('c-sf-key').value.trim();
+  var sfKey = document.getElementById('c-dashscope-key').value.trim();
   var llmModel = document.getElementById('c-llm-model').value.trim();
   var maxSrc = parseInt(document.getElementById('crawl-max').value)||30;
   var yearMin = parseInt(document.getElementById('crawl-year').value)||0;
@@ -15089,7 +15089,7 @@ function generateCrawlerScript(){
     '    "download_data_files": ' + (document.getElementById('c-dl-files').checked ? 'True' : 'False') + ',',
     '    "max_file_size_mb": ' + (parseInt(document.getElementById('c-max-mb').value)||50) + ',',
     '    "use_llm_summary": ' + (useLLM ? 'True' : 'False') + ',',
-    '    "siliconflow_key": ' + pyStr(sfKey) + ',',
+    '    "dashscope_key": ' + pyStr(sfKey) + ',',
     '    "llm_model": ' + pyStr(llmModel) + ',',
     '    "sources": {',
   ];
