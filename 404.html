@@ -4486,9 +4486,9 @@ select{cursor:pointer}
   <div class="nav-tabs" id="nav-tabs">
     <button data-p="home" class="active"> 首页</button>
     <button data-p="search" class="">文献检索</button>
-    <button data-p="datasets">数据集收录与检索</button>
-    <button data-p="agent" class="">研究智能体</button>
-    <button data-p="crawl" class="">🔍 全面爬取</button>
+    <button data-p="datasets">数据集收录</button>
+    <button data-p="crawl" class="">数据爬取与智能分析</button>
+    <button data-p="agent" class="">文献研究智能体</button>
     <button data-p="library">⭐ 我的收藏</button>
     <button data-p="about">ℹ 关于</button>
   </div>
@@ -4501,11 +4501,12 @@ select{cursor:pointer}
 <section id="p-home" class="page active">
   <div class="hero" style="text-align:center">
     <h1 style="text-align:center">心理健康相关科研平台</h1>
-    <p class="sub" style="margin-left:auto;margin-right:auto">文献检索 · 数据集收录与检索 · 研究智能体，一站式服务心理健康科研。</p>
+    <p class="sub" style="margin-left:auto;margin-right:auto">文献检索 · 数据集收录 · 数据爬取与智能分析 · 文献研究智能体，一站式服务心理健康科研。</p>
     <div class="actions" style="justify-content:center">
       <button class="btn primary" onclick="go('search')">文献检索</button>
-      <button class="btn teal" onclick="go('datasets')">数据集收录与检索</button>
-      <button class="btn violet" onclick="go('agent')">研究智能体</button>
+      <button class="btn teal" onclick="go('datasets')">数据集收录</button>
+      <button class="btn" onclick="go('crawl')">数据爬取与智能分析</button>
+      <button class="btn violet" onclick="go('agent')">文献研究智能体</button>
     </div>
   </div>
 
@@ -4531,9 +4532,9 @@ select{cursor:pointer}
     </div>
     <!-- 模块3：研究智能体 -->
     <div style="position:relative;border-radius:14px;overflow:hidden;height:220px;box-shadow:0 4px 24px rgba(0,0,0,.3);background:linear-gradient(135deg,#4c1d95,#0f172a)">
-      <img src="assets/news-ai-review.jpg" alt="研究智能体" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
+      <img src="assets/news-ai-review.jpg" alt="文献研究智能体" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
       <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,15,19,.2) 0%,rgba(15,15,19,.85) 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:18px 20px">
-        <span style="display:inline-block;background:rgba(139,92,246,.9);color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;width:fit-content;margin-bottom:8px">研究智能体</span>
+        <span style="display:inline-block;background:rgba(139,92,246,.9);color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;width:fit-content;margin-bottom:8px">文献研究智能体</span>
         <h3 style="font-size:16px;font-weight:700;color:#fff;margin:0 0 5px;line-height:1.3">STORM 系统综述生成</h3>
         <p style="font-size:12px;color:rgba(255,255,255,.8);margin:0;line-height:1.5">多轮对话 + 真实文献检索，Qwen2.5-32B 生成 8 章中文综述。</p>
       </div>
@@ -4664,7 +4665,7 @@ else:
 
 <!-- ============ PAGE: AGENT ============ -->
 <section id="p-agent" class="page">
-  <div class="page-title"><h2>研究智能体</h2><div class="meta">经典模式：关键词驱动爬取分析；🤖 STORM 模式：多轮对话 → 真实文献检索 → 自动写出 8 章综述</div></div>
+  <div class="page-title"><h2>文献研究智能体</h2><div class="meta">经典模式：关键词驱动爬取分析；🤖 STORM 模式：多轮对话 → 真实文献检索 → 自动写出 8 章综述</div></div>
 
   <!-- STORM / 经典 二级 Tab -->
   <div class="st-subtabs" id="st-subtabs">
@@ -4920,33 +4921,17 @@ else:
   <div id="lib-list"></div>
 </section>
 
-<!-- ============ PAGE DATASETS: 数据集收录与检索 ============ -->
+<!-- ============ PAGE DATASETS: 数据集收录 ============ -->
 <section id="p-datasets" class="page">
-  <div class="page-title"><h2>数据集收录与检索</h2><div class="meta">Harvard Dataverse 检索 · 公开数据集 · 私有数据集</div></div>
+  <div class="page-title"><h2>数据集收录</h2><div class="meta">公开数据集 · 私有数据集</div></div>
 
   <!-- 顶部快速跳转按钮 -->
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px">
-    <button class="btn sm primary" onclick="document.getElementById('ds-section-search').scrollIntoView({behavior:'smooth',block:'start'})"> 数据集检索</button>
     <button class="btn sm teal" onclick="document.getElementById('ds-section-public').scrollIntoView({behavior:'smooth',block:'start'})"> 公开数据集</button>
     <button class="btn sm violet" onclick="document.getElementById('ds-section-private').scrollIntoView({behavior:'smooth',block:'start'})"> 私有数据集</button>
   </div>
 
-  <!-- 模块1：Dataverse 数据集检索框 -->
-  <div id="ds-section-search" style="border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:24px;background:var(--bg-card)">
-    <h3 style="margin:0 0 8px"> 数据集检索（Harvard Dataverse 开放获取）</h3>
-    <div class="toolbar">
-      <input class="input wide" id="ds-q" placeholder="输入关键词，例如：depression survey / mental health cohort / 心理健康">
-      <select id="ds-year"><option value="">所有年份</option><option value="2026">近 1 年</option><option value="2023">近 3 年</option><option value="2019">近 5 年</option><option value="2014">近 10 年</option></select>
-      <button class="btn primary" onclick="dsSearch()"> 检索数据集</button>
-    </div>
-    <div id="ds-search-status" class="empty-tip" style="margin-top:8px">
-       输入关键词后点击「检索数据集」，从 Harvard Dataverse 开放获取平台搜索心理健康相关数据集。
-    </div>
-    <div id="ds-search-results" class="result-list" style="display:none;margin-top:8px"></div>
-    <div id="ds-search-pager" class="pager" style="display:none;margin-top:8px"></div>
-  </div>
-
-  <!-- 模块2：公开数据集 -->
+  <!-- 模块1：公开数据集 -->
   <div id="ds-section-public">
     <div id="ds-tab-public">
       <div class="page-title" style="margin-top:0"><h2>公开数据集</h2><div class="meta" id="dset-count">载入中…</div></div>
@@ -5010,9 +4995,9 @@ else:
 </section><!-- /p-health -->
 
 <!-- ============ PAGE 5: ABOUT ============ -->
-<!-- ============ PAGE CRAWL: 全面数据爬取 ============ -->
+<!-- ============ PAGE CRAWL: 数据爬取与智能分析 ============ -->
 <section id="p-crawl" class="page">
-  <div class="page-title"><h2>🔍 全面数据爬取</h2><div class="meta">多源聚合 · 自动分类摘要 · 本地输出</div></div>
+  <div class="page-title"><h2>数据爬取与智能分析</h2><div class="meta">多源聚合 · 自动分类摘要 · 本地输出 · LAMBDA 智能分析</div></div>
 
   <div class="about-card" style="background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3)">
     <h3 style="margin-top:0">工作原理</h3>
@@ -5409,7 +5394,7 @@ else:
     <h3>MindLab</h3>
     <p>为心理健康及相关研究领域的科研人员设计：一站式检索三大公开学术 API（PubMed / Crossref / Semantic Scholar），获取文献与数据集信息。</p>
 
-    <h3 style="margin-top:24px">研究智能体</h3>
+    <h3 style="margin-top:24px">文献研究智能体</h3>
     <ul>
       <li><b>关键词驱动检索</b>：PubMed / Crossref / Semantic Scholar 三源文献爬取，按 DOI/PMID/标题去重。</li>
       <li><b>结构化中文研究摘要</b>：从标题、摘要自动提取研究对象、方法学、样本量、核心发现四要素。</li>
@@ -5419,11 +5404,11 @@ else:
       <li><b>可下载报告</b>：一键生成 Markdown 综合报告，包含全部文献与数据集。</li>
     </ul>
 
-    <h3 style="margin-top:24px">数据集收录与检索</h3>
+    <h3 style="margin-top:24px">数据集收录</h3>
     <ul>
-      <li><b>Dataverse 数据集检索</b>：从 Harvard Dataverse 开放获取平台检索心理健康相关数据集，按 DOI 去重。</li>
       <li><b>公开数据集</b>：WHO / GBD / OWID 等国际心理健康公开数据集，按分类浏览，可查看详细元数据。</li>
       <li><b>私有数据集</b>：含卫生健康数据智能库（4 大类年鉴），百度网盘整包下载，支持五级链接回退。</li>
+      <li><b>数据爬取</b>：如需检索更多数据集，可使用「数据爬取与智能分析」模块，从 Harvard Dataverse、Zenodo、WHO 等多源抓取。</li>
     </ul>
 
     <h3 style="margin-top:24px">文献检索</h3>
