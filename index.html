@@ -5097,8 +5097,9 @@ else:
       <input class="input" type="password" placeholder="Kaggle API Key" id="kaggle-key" style="max-width:240px">
     </div>
     <div id="auth-weibo" class="auth-box" style="display:none;margin-top:8px">
-      <input class="input" type="text" placeholder="微博 SUB Cookie（从浏览器 F12 → Application → Cookies → weibo.com 中复制 SUB 值）" id="weibo-sub" style="max-width:600px">
-      <p style="color:var(--muted);font-size:12px;margin:4px 0 0">SUB Cookie 是登录微博后浏览器中的凭证，填入后可爬取微博搜索结果。</p>
+      <label class="src-chk"><input type="checkbox" id="weibo-auto-login"> 自动登录（运行脚本时弹出浏览器，扫码后自动获取 Cookie）</label>
+      <input class="input" type="text" placeholder="微博 SUB Cookie（留空则用自动登录；自动登录需安装 playwright）" id="weibo-sub" style="max-width:600px">
+      <p style="color:var(--muted);font-size:12px;margin:4px 0 0">自动登录方式：运行脚本时会弹出 Chrome 浏览器 → 用微博 APP 扫码 → 自动提取 Cookie。<br>需先安装：<code>pip install playwright</code> 然后 <code>playwright install chromium</code></p>
     </div>
   </div>
 
@@ -5183,6 +5184,8 @@ else:
       <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">pip install python-docx requests beautifulsoup4</pre>
       <p>国内网络较慢可换清华源：</p>
       <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">pip install -i https://pypi.tuna.tsinghua.edu.cn/simple python-docx requests beautifulsoup4</pre>
+      <p style="color:var(--muted);font-size:13px">如需<b>微博自动登录</b>（弹出浏览器扫码），额外安装 playwright：</p>
+      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">pip install playwright<br>playwright install chromium</pre>
 
       <p><b>第 4 步：验证安装</b></p>
       <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">python --version<br>pip --version</pre>
@@ -15197,13 +15200,59 @@ def crawl_bilibili(topic, max_results):
     log(f"B站: 获取 {len(out)} 条")
     return out
 
+def get_weibo_sub_auto():
+    """用 Playwright 自动打开浏览器，用户扫码登录后自动提取 SUB cookie。
+    返回 SUB 字符串，失败返回空串。"""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        log("微博自动登录需要 playwright，安装命令: pip install playwright && playwright install chromium", "WARN")
+        return ""
+    log("微博: 正在打开浏览器，请在弹出的窗口中扫码登录 ...")
+    sub = ""
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=False)
+            ctx = browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                viewport={"width": 1280, "height": 800},
+            )
+            page = ctx.new_page()
+            page.goto("https://weibo.com/login.php", wait_until="domcontentloaded", timeout=60000)
+            log("微博: 浏览器已打开，请用微博 APP 扫描二维码登录（等待最多 120 秒）...")
+            # 轮询 cookie，最多等 120 秒
+            for _ in range(240):
+                cookies = ctx.cookies()
+                for c in cookies:
+                    if c["name"] == "SUB" and c["value"]:
+                        sub = c["value"]
+                        break
+                if sub:
+                    break
+                time.sleep(0.5)
+            if sub:
+                log(f"微博: 自动获取 SUB cookie 成功（长度 {len(sub)}）")
+            else:
+                log("微博: 超时未检测到登录，自动获取失败", "WARN")
+            browser.close()
+    except Exception as e:
+        log(f"微博自动登录异常: {e}", "WARN")
+    return sub
+
 def crawl_weibo(topic, max_results):
-    """微博搜索（需 SUB cookie，在 credentials.weibo.sub 配置）"""
+    """微博搜索（需 SUB cookie，可自动获取或手动配置）"""
     log(f"微博: 检索 '{topic}' ...")
     sub_cookie = (CONFIG.get("credentials") or {}).get("weibo",{}).get("sub","")
+    auto_login = (CONFIG.get("credentials") or {}).get("weibo",{}).get("auto_login", False)
     if not sub_cookie:
-        log("微博: 未配置 SUB cookie，跳过（在凭证区填入微博 SUB cookie）", "WARN")
-        return []
+        if auto_login:
+            sub_cookie = get_weibo_sub_auto()
+            if sub_cookie:
+                # 保存到 CONFIG 供后续使用
+                CONFIG["credentials"]["weibo"]["sub"] = sub_cookie
+        if not sub_cookie:
+            log("微博: 未配置 SUB cookie，跳过。可勾选「自动登录」或手动填入 SUB", "WARN")
+            return []
     q = urllib.parse.quote(topic)
     out = []
     hdr = {
@@ -15688,7 +15737,7 @@ function generateCrawlerScript(){
     cnki: {username: document.getElementById('cnki-user').value, password: document.getElementById('cnki-pass').value},
     wanfang: {username: document.getElementById('wanfang-user').value, password: document.getElementById('wanfang-pass').value},
     kaggle: {username: document.getElementById('kaggle-user').value, key: document.getElementById('kaggle-key').value},
-    weibo: {sub: document.getElementById('weibo-sub').value},
+    weibo: {sub: document.getElementById('weibo-sub').value, auto_login: document.getElementById('weibo-auto-login').checked},
   };
 
   // 输出格式
@@ -15725,7 +15774,7 @@ function generateCrawlerScript(){
   configLines.push('        "cnki": {"username": ' + pyStr(creds.cnki.username) + ', "password": ' + pyStr(creds.cnki.password) + '},');
   configLines.push('        "wanfang": {"username": ' + pyStr(creds.wanfang.username) + ', "password": ' + pyStr(creds.wanfang.password) + '},');
   configLines.push('        "kaggle": {"username": ' + pyStr(creds.kaggle.username) + ', "key": ' + pyStr(creds.kaggle.key) + '},');
-  configLines.push('        "weibo": {"sub": ' + pyStr(creds.weibo.sub) + '}');
+  configLines.push('        "weibo": {"sub": ' + pyStr(creds.weibo.sub) + ', "auto_login": ' + (creds.weibo.auto_login ? 'True' : 'False') + '}');
   configLines.push('    },');
   configLines.push('}');
 
@@ -15747,7 +15796,7 @@ function generateCrawlerScript(){
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 
-  msg.innerHTML = '✅ 脚本已生成：<b>' + filename + '</b><br>请在本地运行：<code>pip install python-docx requests beautifulsoup4</code> 然后 <code>python ' + filename + '</code><br><span style="color:var(--warn)">本地未安装 Python？请展开下方「🐍 Python 安装引导」按步骤操作。</span>';
+  msg.innerHTML = '✅ 脚本已生成：<b>' + filename + '</b><br>请在本地运行：<code>pip install python-docx requests beautifulsoup4</code> 然后 <code>python ' + filename + '</code><br><span style="color:var(--muted);font-size:12px">（启用微博自动登录还需：<code>pip install playwright && playwright install chromium</code>）</span><br><span style="color:var(--warn)">本地未安装 Python？请展开下方「🐍 Python 安装引导」按步骤操作。</span>';
 }
 </script>
 
