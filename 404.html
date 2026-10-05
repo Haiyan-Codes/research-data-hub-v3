@@ -5052,6 +5052,8 @@ else:
       <label class="src-chk"><input type="checkbox" class="c-src" data-s="arxiv"> arXiv</label>
       <label class="src-chk"><input type="checkbox" class="c-src" data-s="google_scholar"> Google Scholar</label>
       <label class="src-chk"><input type="checkbox" class="c-src" data-s="openaire"> OpenAIRE</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="europepmc" checked> Europe PMC</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="biorxiv" checked> medRxiv 预印本</label>
     </div>
 
     <h4 style="margin:18px 0 6px;color:var(--warn)">🔐 需账号文献源（填写凭证才会爬取）</h4>
@@ -5073,7 +5075,15 @@ else:
     <div style="display:flex;flex-wrap:wrap;gap:10px">
       <label class="src-chk"><input type="checkbox" class="c-src" data-s="harvard_dataverse" checked> Harvard Dataverse</label>
       <label class="src-chk"><input type="checkbox" class="c-src" data-s="zenodo" checked> Zenodo</label>
-      <label class="src-chk"><input type="checkbox" class="c-src" data-s="who"> WHO</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="who" checked> WHO</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="dryad" checked> Dryad</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="figshare" checked> Figshare</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="osf" checked> OSF</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="dataone" checked> DataONE</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="huggingface" checked> HuggingFace</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="worldbank" checked> World Bank</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="github" checked> GitHub</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="datacite" checked> DataCite</label>
       <label class="src-chk"><input type="checkbox" class="c-src" data-s="kaggle" onchange="toggleAuth('kaggle')"> Kaggle（需 API Key）</label>
     </div>
     <div id="auth-kaggle" class="auth-box" style="display:none;margin-top:8px">
@@ -14744,6 +14754,379 @@ def crawl_openaire(topic, max_results):
     return out
 
 # ============================================================
+# 新增数据源 — 数据集
+# ============================================================
+
+def crawl_dryad(topic, max_results):
+    """Dryad 开放数据仓库（开放 API）"""
+    log(f"Dryad: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://datadryad.org/api/v2/search?q={q}&page=1&per_page={max_results}"
+    r = http_get(url)
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in (j.get("_embedded") or {}).get("stash:datasets", [])[:max_results]:
+                title = it.get("title","")
+                doi = it.get("identifier","").replace("doi:","")
+                yr = None
+                if it.get("publicationDate"):
+                    try: yr = int(it["publicationDate"][:4])
+                    except: pass
+                if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+                # 获取文件列表
+                files = []
+                if CONFIG.get("download_data_files"):
+                    files_url = f"https://datadryad.org/api/v2/datasets/{urllib.parse.quote(doi)}/files" if doi else ""
+                    fr = http_get(files_url) if files_url else None
+                    if fr:
+                        try:
+                            fj = json.loads(fr)
+                            for f in (fj.get("_embedded") or {}).get("items", [])[:10]:
+                                furl = f.get("_links",{}).get("content",{}).get("href","")
+                                if furl:
+                                    files.append({"name": f.get("filename","file"), "url": furl, "size": f.get("size",0)})
+                        except: pass
+                    time.sleep(RATE_DELAY)
+                out.append({
+                    "type": "dataset", "source": "Dryad",
+                    "title": title, "doi": doi,
+                    "authors": ", ".join([a.get("name","") for a in (it.get("authors") or [])[:5]]),
+                    "year": yr,
+                    "abstract": (it.get("abstract") or "")[:500],
+                    "file_count": len(files), "files": files,
+                    "url": it.get("_links",{}).get("self",{}).get("href",""),
+                })
+        except: pass
+    log(f"Dryad: 获取 {len(out)} 条 (含文件链接)")
+    return out
+
+def crawl_figshare(topic, max_results):
+    """Figshare 研究数据（开放 API）"""
+    log(f"Figshare: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://api.figshare.com/v2/articles?search_for={q}&item_type=dataset&page_size={max_results}&order=relevance"
+    r = http_get(url, headers={"Accept": "application/json"})
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in j[:max_results]:
+                yr = None
+                if it.get("published_date"):
+                    try: yr = int(it["published_date"][:4])
+                    except: pass
+                if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+                # 获取文件
+                files = []
+                if CONFIG.get("download_data_files"):
+                    detail = http_get(it.get("url",""))
+                    if detail:
+                        try:
+                            dj = json.loads(detail)
+                            for f in (dj.get("files") or [])[:10]:
+                                furl = f.get("download_url","")
+                                if furl:
+                                    files.append({"name": f.get("name","file"), "url": furl, "size": f.get("size",0)})
+                        except: pass
+                    time.sleep(RATE_DELAY)
+                out.append({
+                    "type": "dataset", "source": "Figshare",
+                    "title": it.get("title",""),
+                    "doi": it.get("doi",""),
+                    "authors": ", ".join([a.get("full_name","") for a in (it.get("authors") or [])[:5]]),
+                    "year": yr,
+                    "abstract": (it.get("description") or "")[:500],
+                    "file_count": len(files), "files": files,
+                    "url": it.get("figshare_url",""),
+                })
+        except: pass
+    log(f"Figshare: 获取 {len(out)} 条 (含文件链接)")
+    return out
+
+def crawl_osf(topic, max_results):
+    """Open Science Framework 数据（开放 API）"""
+    log(f"OSF: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://api.osf.io/v2/nodes/?filter[title]={q}&page[size]={max_results}"
+    r = http_get(url)
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in (j.get("data") or [])[:max_results]:
+                attr = it.get("attributes",{})
+                yr = None
+                if attr.get("date_created"):
+                    try: yr = int(attr["date_created"][:4])
+                    except: pass
+                if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+                files = []
+                if CONFIG.get("download_data_files"):
+                    # OSF 文件需要遍历 files 链接，这里只标记首页
+                    files_link = (it.get("relationships",{}).get("files",{}).get("links",{}).get("related",{}).get("href",""))
+                    if files_link:
+                        fr = http_get(files_link)
+                        if fr:
+                            try:
+                                fj = json.loads(fr)
+                                for f in (fj.get("data") or [])[:10]:
+                                    fn = f.get("attributes",{}).get("name","")
+                                    furl = f.get("links",{}).get("download","")
+                                    if furl:
+                                        files.append({"name": fn, "url": furl, "size": f.get("attributes",{}).get("size",0)})
+                            except: pass
+                        time.sleep(RATE_DELAY)
+                out.append({
+                    "type": "dataset", "source": "OSF",
+                    "title": attr.get("title",""),
+                    "doi": it.get("links",{}).get("doi",""),
+                    "authors": "",
+                    "year": yr,
+                    "abstract": (attr.get("description") or "")[:500],
+                    "file_count": len(files), "files": files,
+                    "url": attr.get("osf_url",""),
+                })
+        except: pass
+    log(f"OSF: 获取 {len(out)} 条 (含文件链接)")
+    return out
+
+def crawl_dataone(topic, max_results):
+    """DataONE 联邦数据检索（开放 API）"""
+    log(f"DataONE: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://cn.dataone.org/cn/v2/query/solr/?q={q}&rows={max_results}&fl=id,title,author,dateUploaded,doi,resourceUrl,formatType&wt=json"
+    r = http_get(url)
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in (j.get("response") or {}).get("docs", [])[:max_results]:
+                yr = None
+                if it.get("dateUploaded"):
+                    try: yr = int(it["dateUploaded"][:4])
+                    except: pass
+                if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+                pid = it.get("id","")
+                files = []
+                if CONFIG.get("download_data_files") and pid:
+                    files.append({"name": pid[:60], "url": f"https://cn.dataone.org/cn/v2/object/{urllib.parse.quote(pid, safe='')}", "size": 0})
+                out.append({
+                    "type": "dataset", "source": "DataONE",
+                    "title": it.get("title",""),
+                    "doi": it.get("doi",""),
+                    "authors": it.get("author","")[:200],
+                    "year": yr,
+                    "abstract": "",
+                    "file_count": len(files), "files": files,
+                    "url": it.get("resourceUrl","") or f"https://search.dataone.org/view/{pid}",
+                })
+        except: pass
+    log(f"DataONE: 获取 {len(out)} 条 (含文件链接)")
+    return out
+
+def crawl_huggingface(topic, max_results):
+    """Hugging Face 数据集（开放 API）"""
+    log(f"Hugging Face: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://huggingface.co/api/datasets?search={q}&limit={max_results}"
+    r = http_get(url, timeout=60)
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in j[:max_results]:
+                ds_id = it.get("id","")
+                files = []
+                if CONFIG.get("download_data_files") and ds_id:
+                    # HuggingFace 数据集可通过 API 下载 parquet
+                    files.append({"name": f"{ds_id.replace('/','_')}.parquet",
+                                  "url": f"https://huggingface.co/api/datasets/{ds_id}/parquet",
+                                  "size": 0})
+                out.append({
+                    "type": "dataset", "source": "HuggingFace",
+                    "title": ds_id,
+                    "doi": "",
+                    "authors": (it.get("author") or ""),
+                    "year": None,
+                    "abstract": " ".join(it.get("tags",[])[:10]),
+                    "file_count": len(files), "files": files,
+                    "url": f"https://huggingface.co/datasets/{ds_id}",
+                })
+        except: pass
+    log(f"Hugging Face: 获取 {len(out)} 条 (含文件链接)")
+    return out
+
+def crawl_worldbank(topic, max_results):
+    """World Bank 数据（开放 API）"""
+    log(f"World Bank: 检索 '{topic}' ...")
+    # 获取所有指标，本地过滤匹配主题
+    url = "https://api.worldbank.org/v2/indicator?format=json&per_page=20000"
+    r = http_get(url)
+    out = []
+    topic_lower = topic.lower()
+    if r:
+        try:
+            j = json.loads(r)
+            if isinstance(j, list) and len(j) > 1:
+                matched = [it for it in j[1]
+                           if topic_lower in (it.get("name","") or "").lower()
+                           or topic_lower in (it.get("sourceNote","") or "").lower()]
+                for it in matched[:max_results]:
+                    name = it.get("name","")
+                    code = it.get("id","")
+                    files = []
+                    if CONFIG.get("download_data_files") and code:
+                        files.append({"name": f"{code}.csv",
+                                      "url": f"https://api.worldbank.org/v2/country/all/indicator/{code}?format=csv",
+                                      "size": 0})
+                    out.append({
+                        "type": "dataset", "source": "World Bank",
+                        "title": name,
+                        "doi": "", "authors": "World Bank",
+                        "year": None,
+                        "abstract": (it.get("sourceNote","") or "")[:500],
+                        "file_count": len(files), "files": files,
+                        "url": f"https://data.worldbank.org/indicator/{code}",
+                    })
+        except: pass
+    log(f"World Bank: 获取 {len(out)} 条 (含文件链接)")
+    return out
+
+def crawl_github(topic, max_results):
+    """GitHub 数据相关仓库（开放 API）"""
+    log(f"GitHub: 检索 '{topic}' ...")
+    q = urllib.parse.quote(f"{topic} data in:name,description,readme")
+    url = f"https://api.github.com/search/repositories?q={q}&sort=stars&order=desc&per_page={max_results}"
+    r = http_get(url, headers={"Accept": "application/vnd.github.v3+json"})
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in (j.get("items") or [])[:max_results]:
+                yr = None
+                if it.get("created_at"):
+                    try: yr = int(it["created_at"][:4])
+                    except: pass
+                if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+                files = []
+                if CONFIG.get("download_data_files"):
+                    files.append({"name": f"{it.get('name','repo')}.zip",
+                                  "url": it.get("archive_url","").replace("{archive_format}","zipball").replace("{/ref}","/main"),
+                                  "size": 0})
+                out.append({
+                    "type": "dataset", "source": "GitHub",
+                    "title": it.get("full_name",""),
+                    "doi": "",
+                    "authors": it.get("owner",{}).get("login",""),
+                    "year": yr,
+                    "abstract": (it.get("description") or "")[:500],
+                    "file_count": len(files), "files": files,
+                    "url": it.get("html_url",""),
+                })
+        except: pass
+    log(f"GitHub: 获取 {len(out)} 条 (含文件链接)")
+    return out
+
+def crawl_datacite(topic, max_results):
+    """DataCite DOI 数据集检索（开放 API）"""
+    log(f"DataCite: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://api.datacite.org/dois?query={q}&resource-type-id=dataset&page[size]={max_results}"
+    r = http_get(url)
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in (j.get("data") or [])[:max_results]:
+                attr = it.get("attributes",{})
+                yr = None
+                if attr.get("published"):
+                    try: yr = int(str(attr["published"])[:4])
+                    except: pass
+                if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+                doi = attr.get("doi","")
+                files = []
+                if CONFIG.get("download_data_files") and doi:
+                    files.append({"name": doi.replace("/","_"),
+                                  "url": f"https://doi.org/{doi}", "size": 0})
+                out.append({
+                    "type": "dataset", "source": "DataCite",
+                    "title": attr.get("titles",[{}])[0].get("title","") if attr.get("titles") else "",
+                    "doi": doi,
+                    "authors": ", ".join([c.get("name","") for c in (attr.get("creators") or [])[:5]]),
+                    "year": yr,
+                    "abstract": (attr.get("descriptions",[{}])[0].get("description","") if attr.get("descriptions") else "")[:500],
+                    "file_count": len(files), "files": files,
+                    "url": attr.get("url",""),
+                })
+        except: pass
+    log(f"DataCite: 获取 {len(out)} 条 (含文件链接)")
+    return out
+
+# ============================================================
+# 新增数据源 — 文献
+# ============================================================
+
+def crawl_europepmc(topic, max_results):
+    """Europe PMC 文献检索（含 PubMed Central，开放 API）"""
+    log(f"Europe PMC: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    url = f"https://www.ebi.ac.uk/europepmc/webservices/rest/search?query={q}&format=json&pageSize={max_results}&resultType=core"
+    r = http_get(url)
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in (j.get("resultList",{}).get("result",[]) or [])[:max_results]:
+                yr = int(it["pubYear"]) if it.get("pubYear","").isdigit() else None
+                if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+                out.append({
+                    "type": "literature", "source": "Europe PMC",
+                    "title": it.get("title",""),
+                    "doi": it.get("doi",""),
+                    "pmid": it.get("pmid",""),
+                    "authors": (it.get("authorString","") or "")[:200],
+                    "journal": it.get("journalTitle",""),
+                    "year": yr,
+                    "abstract": (it.get("abstractText","") or "")[:500],
+                    "url": f"https://europepmc.org/article/{it.get('source','')}/{it.get('id','')}",
+                })
+        except: pass
+    log(f"Europe PMC: 获取 {len(out)} 条")
+    return out
+
+def crawl_biorxiv(topic, max_results):
+    """bioRxiv/medRxiv 预印本（开放 API）"""
+    log(f"bioRxiv: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    # medRxiv 更偏医学/心理健康
+    url = f"https://api.biorxiv.org/details/medrxiv/2025-01-01/2026-12-31/{max_results}?query={q}"
+    r = http_get(url)
+    out = []
+    if r:
+        try:
+            j = json.loads(r)
+            for it in (j.get("collection") or [])[:max_results]:
+                yr = int(it["date"][:4]) if it.get("date","")[:4].isdigit() else None
+                if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+                out.append({
+                    "type": "literature", "source": "medRxiv",
+                    "title": it.get("title",""),
+                    "doi": it.get("doi",""),
+                    "pmid": "",
+                    "authors": (it.get("authors","") or "")[:200],
+                    "journal": "medRxiv preprint",
+                    "year": yr,
+                    "abstract": (it.get("abstract","") or "")[:500],
+                    "url": f"https://doi.org/{it.get('doi','')}",
+                })
+        except: pass
+    log(f"bioRxiv/medRxiv: 获取 {len(out)} 条")
+    return out
+
+# ============================================================
 # LLM 摘要分类
 # ============================================================
 
@@ -14955,6 +15338,14 @@ def main():
         try: all_items += crawl_openaire(topic, CONFIG["max_per_source"])
         except Exception as e: log(f"OpenAIRE 异常: {e}", "WARN")
         time.sleep(RATE_DELAY)
+    if src.get("europepmc"):
+        try: all_items += crawl_europepmc(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"EuropePMC 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("biorxiv"):
+        try: all_items += crawl_biorxiv(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"bioRxiv 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
 
     # ---- 数据集源 ----
     if src.get("harvard_dataverse"):
@@ -14972,6 +15363,38 @@ def main():
     if src.get("who"):
         try: all_items += crawl_who(topic, CONFIG["max_per_source"])
         except Exception as e: log(f"WHO 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("dryad"):
+        try: all_items += crawl_dryad(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"Dryad 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("figshare"):
+        try: all_items += crawl_figshare(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"Figshare 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("osf"):
+        try: all_items += crawl_osf(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"OSF 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("dataone"):
+        try: all_items += crawl_dataone(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"DataONE 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("huggingface"):
+        try: all_items += crawl_huggingface(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"HuggingFace 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("worldbank"):
+        try: all_items += crawl_worldbank(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"WorldBank 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("github"):
+        try: all_items += crawl_github(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"GitHub 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("datacite"):
+        try: all_items += crawl_datacite(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"DataCite 异常: {e}", "WARN")
         time.sleep(RATE_DELAY)
 
     # ---- 去重 ----
