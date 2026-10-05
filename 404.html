@@ -5086,9 +5086,19 @@ else:
       <label class="src-chk"><input type="checkbox" class="c-src" data-s="datacite" checked> DataCite</label>
       <label class="src-chk"><input type="checkbox" class="c-src" data-s="kaggle" onchange="toggleAuth('kaggle')"> Kaggle（需 API Key）</label>
     </div>
+    <h4 style="margin:14px 0 6px;color:var(--accent)">💬 社交媒体（公众讨论/情绪）</h4>
+    <div class="toolbar" style="flex-wrap:wrap">
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="bilibili" checked> B站（免登录）</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="douban" checked> 豆瓣（免登录）</label>
+      <label class="src-chk"><input type="checkbox" class="c-src" data-s="weibo" onchange="toggleAuth('weibo')"> 微博（需 SUB Cookie）</label>
+    </div>
     <div id="auth-kaggle" class="auth-box" style="display:none;margin-top:8px">
       <input class="input" placeholder="Kaggle 用户名" id="kaggle-user" style="max-width:200px">
       <input class="input" type="password" placeholder="Kaggle API Key" id="kaggle-key" style="max-width:240px">
+    </div>
+    <div id="auth-weibo" class="auth-box" style="display:none;margin-top:8px">
+      <input class="input" type="text" placeholder="微博 SUB Cookie（从浏览器 F12 → Application → Cookies → weibo.com 中复制 SUB 值）" id="weibo-sub" style="max-width:600px">
+      <p style="color:var(--muted);font-size:12px;margin:4px 0 0">SUB Cookie 是登录微博后浏览器中的凭证，填入后可爬取微博搜索结果。</p>
     </div>
   </div>
 
@@ -15127,6 +15137,173 @@ def crawl_biorxiv(topic, max_results):
     return out
 
 # ============================================================
+# 社交媒体数据源
+# ============================================================
+
+_BILI_COOKIE_JAR = None
+
+def _get_bilibili_opener():
+    """获取带 cookie 的 B 站 opener（先访问首页拿 buvid）"""
+    global _BILI_COOKIE_JAR
+    import http.cookiejar
+    if _BILI_COOKIE_JAR is None:
+        cj = http.cookiejar.CookieJar()
+        opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+        hdr = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        try:
+            opener.open(urllib.request.Request("https://www.bilibili.com/", headers=hdr), timeout=15)
+        except: pass
+        _BILI_COOKIE_JAR = (cj, opener, hdr)
+    return _BILI_COOKIE_JAR
+
+def crawl_bilibili(topic, max_results):
+    """B站视频搜索（免登录，开放 API）"""
+    log(f"B站: 检索 '{topic}' ...")
+    cj, opener, hdr = _get_bilibili_opener()
+    q = urllib.parse.quote(topic)
+    out = []
+    page = 1
+    while len(out) < max_results and page <= 5:
+        url = f"https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword={q}&page={page}"
+        try:
+            req = urllib.request.Request(url, headers={**hdr, "Referer": "https://search.bilibili.com/"})
+            with opener.open(req, timeout=20) as resp:
+                j = json.loads(resp.read().decode("utf-8", "replace"))
+                results = (j.get("data") or {}).get("result", []) or []
+                for it in results:
+                    if len(out) >= max_results: break
+                    ts = it.get("pubdate")
+                    yr = None
+                    if ts:
+                        try: yr = int(__import__("datetime").datetime.fromtimestamp(ts).year)
+                        except: pass
+                    if CONFIG["year_min"] and yr and yr < CONFIG["year_min"]: continue
+                    # 清理 HTML 标签
+                    title = re.sub(r"<[^>]+>", "", it.get("title",""))
+                    desc = re.sub(r"<[^>]+>", "", it.get("description",""))[:300]
+                    out.append({
+                        "type": "social", "source": "Bilibili",
+                        "title": title,
+                        "authors": it.get("author",""),
+                        "year": yr,
+                        "abstract": desc,
+                        "doi": "", "pmid": "",
+                        "url": it.get("arcurl",""),
+                        "stats": f"播放:{it.get('play',0)} 弹幕:{it.get('video_review',0)} 收藏:{it.get('favorites',0)}",
+                    })
+        except: break
+        page += 1
+        time.sleep(RATE_DELAY)
+    log(f"B站: 获取 {len(out)} 条")
+    return out
+
+def crawl_weibo(topic, max_results):
+    """微博搜索（需 SUB cookie，在 credentials.weibo.sub 配置）"""
+    log(f"微博: 检索 '{topic}' ...")
+    sub_cookie = (CONFIG.get("credentials") or {}).get("weibo",{}).get("sub","")
+    if not sub_cookie:
+        log("微博: 未配置 SUB cookie，跳过（在凭证区填入微博 SUB cookie）", "WARN")
+        return []
+    q = urllib.parse.quote(topic)
+    out = []
+    hdr = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Cookie": f"SUB={sub_cookie}",
+        "Referer": "https://s.weibo.com/",
+    }
+    for page in range(1, 6):
+        if len(out) >= max_results: break
+        url = f"https://s.weibo.com/weibo?q={q}&typeall=1&page={page}"
+        try:
+            req = urllib.request.Request(url, headers=hdr)
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                html = resp.read().decode("utf-8", "replace")
+            # 解析微博卡片
+            cards = re.findall(r'<div class="card-wrap"[^>]*>(.*?)</div>\s*</div>\s*</div>', html, re.DOTALL)
+            if not cards:
+                # 备用：提取昵称 + 文本
+                names = re.findall(r'<a class="name"[^>]*>([^<]+)</a>', html)
+                texts = re.findall(r'<p class="txt"[^>]*>(.*?)</p>', html, re.DOTALL)
+                for i in range(min(len(names), len(texts))):
+                    if len(out) >= max_results: break
+                    txt = re.sub(r"<[^>]+>", "", texts[i]).strip()[:300]
+                    if not txt: continue
+                    out.append({
+                        "type": "social", "source": "Weibo",
+                        "title": txt[:80],
+                        "authors": names[i],
+                        "year": None,
+                        "abstract": txt,
+                        "doi": "", "pmid": "",
+                        "url": "",
+                        "stats": "",
+                    })
+            else:
+                for card in cards:
+                    if len(out) >= max_results: break
+                    name_m = re.search(r'<a class="name"[^>]*>([^<]+)</a>', card)
+                    txt_m = re.search(r'<p class="txt"[^>]*>(.*?)</p>', card, re.DOTALL)
+                    if not txt_m: continue
+                    txt = re.sub(r"<[^>]+>", "", txt_m.group(1)).strip()[:300]
+                    if not txt: continue
+                    out.append({
+                        "type": "social", "source": "Weibo",
+                        "title": txt[:80],
+                        "authors": name_m.group(1) if name_m else "",
+                        "year": None,
+                        "abstract": txt,
+                        "doi": "", "pmid": "",
+                        "url": "",
+                        "stats": "",
+                    })
+        except Exception as e:
+            log(f"微博第{page}页异常: {e}", "WARN")
+            break
+        time.sleep(RATE_DELAY)
+    log(f"微博: 获取 {len(out)} 条")
+    return out
+
+def crawl_douban(topic, max_results):
+    """豆瓣小组/日记搜索（开放，HTML 解析）"""
+    log(f"豆瓣: 检索 '{topic}' ...")
+    q = urllib.parse.quote(topic)
+    out = []
+    hdr = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://www.douban.com/",
+    }
+    url = f"https://www.douban.com/search?cat=1019&q={q}"
+    try:
+        req = urllib.request.Request(url, headers=hdr)
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            html = resp.read().decode("utf-8", "replace")
+        # 解析搜索结果
+        results = re.findall(r'<div class="result">(.*?)</div>\s*</div>\s*</div>', html, re.DOTALL)
+        for r in results[:max_results]:
+            title_m = re.search(r'<a[^>]*class="[^"]*title[^"]*"[^>]*>(.*?)</a>', r, re.DOTALL)
+            if not title_m:
+                title_m = re.search(r'<h3>.*?<a[^>]*>(.*?)</a>', r, re.DOTALL)
+            title = re.sub(r"<[^>]+>", "", title_m.group(1)).strip() if title_m else ""
+            if not title: continue
+            desc_m = re.search(r'<span class="subject-cast">(.*?)</span>', r, re.DOTALL)
+            desc = re.sub(r"<[^>]+>", "", desc_m.group(1)).strip()[:300] if desc_m else ""
+            link_m = re.search(r'href="(https?://[^"]+)"', r)
+            out.append({
+                "type": "social", "source": "Douban",
+                "title": title[:100],
+                "authors": "",
+                "year": None,
+                "abstract": desc,
+                "doi": "", "pmid": "",
+                "url": link_m.group(1) if link_m else "",
+                "stats": "",
+            })
+    except Exception as e:
+        log(f"豆瓣异常: {e}", "WARN")
+    log(f"豆瓣: 获取 {len(out)} 条")
+    return out
+
+# ============================================================
 # LLM 摘要分类
 # ============================================================
 
@@ -15139,13 +15316,18 @@ def llm_summarize(topic, items):
     # 构建 prompt
     lit = [i for i in items if i["type"]=="literature"][:50]
     ds = [i for i in items if i["type"]=="dataset"][:30]
+    soc = [i for i in items if i["type"]=="social"][:40]
     prompt = f"主题：{topic}\n\n文献（{len(lit)}条）：\n"
     for i, x in enumerate(lit, 1):
         prompt += f"{i}. {x['title']} ({x.get('year','')}, {x['source']})\n"
     prompt += f"\n数据集（{len(ds)}条）：\n"
     for i, x in enumerate(ds, 1):
         prompt += f"{i}. {x['title']} ({x.get('year','')}, {x['source']})\n"
-    prompt += "\n请生成：1) 按主题分类的摘要（每类3-5句话）；2) 整体研究趋势与热点。用中文回答。"
+    if soc:
+        prompt += f"\n社交媒体讨论（{len(soc)}条）：\n"
+        for i, x in enumerate(soc, 1):
+            prompt += f"{i}. [{x['source']}] {x['title'][:60]}\n"
+    prompt += "\n请生成：1) 按主题分类的摘要（每类3-5句话）；2) 整体研究趋势与热点；3) 社交媒体公众讨论的情绪倾向与关注点。用中文回答。"
 
     body = json.dumps({
         "model": CONFIG["llm_model"],
@@ -15213,7 +15395,7 @@ def save_csv(items, path):
     if not items:
         log(f"CSV 跳过（无数据）: {path}")
         return
-    keys = ["type","source","title","authors","journal","year","doi","pmid","abstract","url","file_count","files"]
+    keys = ["type","source","title","authors","journal","year","doi","pmid","abstract","url","file_count","files","stats"]
     with open(path, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=keys, extrasaction="ignore")
         w.writeheader()
@@ -15397,6 +15579,20 @@ def main():
         except Exception as e: log(f"DataCite 异常: {e}", "WARN")
         time.sleep(RATE_DELAY)
 
+    # ---- 社交媒体源 ----
+    if src.get("bilibili"):
+        try: all_items += crawl_bilibili(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"B站 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("weibo"):
+        try: all_items += crawl_weibo(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"微博 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+    if src.get("douban"):
+        try: all_items += crawl_douban(topic, CONFIG["max_per_source"])
+        except Exception as e: log(f"豆瓣 异常: {e}", "WARN")
+        time.sleep(RATE_DELAY)
+
     # ---- 去重 ----
     log(f"去重前: {len(all_items)} 条")
     seen = set()
@@ -15444,13 +15640,17 @@ def main():
     if "csv" in CONFIG["output_format"]:
         save_csv(lit, os.path.join(out_dir, "literature.csv"))
         save_csv(ds, os.path.join(out_dir, "datasets.csv"))
+        social = [i for i in related if i["type"]=="social"]
+        if social:
+            save_csv(social, os.path.join(out_dir, "social_media.csv"))
 
     if "docx" in CONFIG["output_format"]:
         save_docx(topic, related, categories, llm_result, os.path.join(out_dir, "report.docx"))
 
     log("=" * 60)
     log(f"爬取完成！输出目录: {os.path.abspath(out_dir)}")
-    log(f"  文献: {len(lit)} 条 | 数据集: {len(ds)} 条")
+    social = [i for i in related if i["type"]=="social"]
+    log(f"  文献: {len(lit)} 条 | 数据集: {len(ds)} 条 | 社交媒体: {len(social)} 条")
     log(f"  分类数: {len(categories)}")
     if CONFIG.get("download_data_files"):
         log(f"  数据文件下载: 成功 {dl_stat['downloaded']} 个，跳过/失败 {dl_stat['skipped']} 个")
@@ -15488,6 +15688,7 @@ function generateCrawlerScript(){
     cnki: {username: document.getElementById('cnki-user').value, password: document.getElementById('cnki-pass').value},
     wanfang: {username: document.getElementById('wanfang-user').value, password: document.getElementById('wanfang-pass').value},
     kaggle: {username: document.getElementById('kaggle-user').value, key: document.getElementById('kaggle-key').value},
+    weibo: {sub: document.getElementById('weibo-sub').value},
   };
 
   // 输出格式
@@ -15524,6 +15725,7 @@ function generateCrawlerScript(){
   configLines.push('        "cnki": {"username": ' + pyStr(creds.cnki.username) + ', "password": ' + pyStr(creds.cnki.password) + '},');
   configLines.push('        "wanfang": {"username": ' + pyStr(creds.wanfang.username) + ', "password": ' + pyStr(creds.wanfang.password) + '},');
   configLines.push('        "kaggle": {"username": ' + pyStr(creds.kaggle.username) + ', "key": ' + pyStr(creds.kaggle.key) + '},');
+  configLines.push('        "weibo": {"sub": ' + pyStr(creds.weibo.sub) + '}');
   configLines.push('    },');
   configLines.push('}');
 
