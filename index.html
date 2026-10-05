@@ -5024,7 +5024,10 @@ else:
   <div class="about-card" style="margin-top:18px">
     <h3 style="margin-top:0">① 研究主题</h3>
     <div class="toolbar">
-      <input class="input wide" id="crawl-topic" placeholder="例如：depression / mental health cohort / 青少年焦虑障碍" value="depression">
+      <input class="input wide" id="crawl-topic" placeholder="例如：depression / mental health cohort / 青少年焦虑障碍" value="depression" oninput="crawlTopicInput(this.value)">
+      <button class="btn" onclick="extractEnglishKeywords()" style="white-space:nowrap" title="将中文主题翻译并拆分为英文检索词组合">🔄 提取英文检索词</button>
+    </div>
+    <div class="toolbar" style="margin-top:8px">
       <select id="crawl-max">
         <option value="20">每源 20 条</option>
         <option value="30" selected>每源 30 条（推荐）</option>
@@ -5037,6 +5040,17 @@ else:
         <option value="2019" selected>近 5 年</option>
         <option value="2014">近 10 年</option>
       </select>
+    </div>
+    <div id="kw-status" style="color:var(--muted);font-size:12px;margin-top:4px;display:none"></div>
+
+    <!-- 英文检索词结果区 -->
+    <div id="kw-result" style="margin-top:10px;display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--accent);font-weight:600">📝 英文检索词（可编辑，用逗号分隔，将用于学术数据库检索）</span>
+        <button class="btn" style="padding:4px 12px;font-size:12px" onclick="document.getElementById('crawl-keywords').value='';document.getElementById('kw-result').style.display='none'">清空</button>
+      </div>
+      <textarea id="crawl-keywords" rows="3" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--bg-elev);color:var(--ink);font-family:monospace;font-size:13px;resize:vertical" placeholder="英文关键词将显示在此处，可手动编辑"></textarea>
+      <div id="kw-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
     </div>
   </div>
 
@@ -5128,7 +5142,26 @@ else:
       <input class="input" id="c-deepseek-key" type="password" placeholder="DeepSeek API Key（sk-xxx）" style="max-width:320px">
       <input class="input" id="c-llm-model" value="deepseek-chat" style="max-width:200px" title="可选 deepseek-chat / deepseek-reasoner">
     </div>
-    <p style="color:var(--muted);font-size:12px;margin:6px 0 0">Key 仅写入本地脚本。不填则跳过 AI 摘要，仅做关键词自动分类。Key 获取：<a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">DeepSeek 开放平台</a></p>
+    <p style="color:var(--muted);font-size:12px;margin:6px 0 0">Key 仅写入本地脚本。不填则跳过 AI 摘要，仅做关键词自动分类。Key 获取：<a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">DeepSeek 开放平台</a> · <a href="#deepseek-guide" onclick="document.getElementById('deepseek-guide').open=true" style="color:var(--accent2)">📖 申请与购买指南</a></p>
+
+    <h4 style="margin:14px 0 6px;color:var(--warn)">🤖 LAMBDA 智能分析（可选，需本地部署后端）</h4>
+    <div class="toolbar" style="flex-wrap:wrap;gap:10px">
+      <label class="src-chk"><input type="checkbox" id="c-use-lambda"> 启用 LAMBDA 自动数据分析</label>
+    </div>
+    <div class="toolbar" style="flex-wrap:wrap;gap:10px;margin-top:8px">
+      <span style="color:var(--ink2)">后端地址</span>
+      <input class="input" id="c-lambda-url" value="http://localhost:8000" style="max-width:220px" placeholder="LAMBDA 后端 URL">
+      <span style="color:var(--ink2)">模型</span>
+      <input class="input" id="c-lambda-model" value="deepseek-chat" style="max-width:160px" placeholder="deepseek-chat">
+      <span style="color:var(--ink2)">分析思路</span>
+      <input class="input" id="c-lambda-ideas" type="number" value="5" min="1" max="10" style="width:70px">
+      <span style="color:var(--ink2)">条</span>
+    </div>
+    <p style="color:var(--muted);font-size:12px;margin:6px 0 0">
+      LAMBDA 是开源数据分析智能体，需在本地部署后端后使用。分析思路由 DeepSeek 基于爬取内容自动生成，逐条交由 LAMBDA 分析。
+      <a href="#lambda-deploy" onclick="document.getElementById('lambda-deploy').open=true" style="color:var(--accent2)">📖 查看部署指南</a>
+      · <a href="#deepseek-guide" onclick="document.getElementById('deepseek-guide').open=true" style="color:var(--accent2)">🔑 申请 DeepSeek Key</a>
+    </p>
   </div>
 
   <!-- 生成按钮 -->
@@ -5136,6 +5169,101 @@ else:
     <button class="btn primary" onclick="generateCrawlerScript()" style="padding:14px 36px;font-size:15px">⬇ 生成爬虫脚本并下载</button>
     <div id="crawl-msg" style="margin-top:10px;color:var(--muted);font-size:13px;min-height:20px"></div>
   </div>
+
+  <!-- DeepSeek API Key 申请与购买指南 -->
+  <details class="about-card" style="margin-top:18px" id="deepseek-guide">
+    <summary style="cursor:pointer;font-weight:600;color:var(--accent)">🔑 DeepSeek API Key 申请与购买指南（点击展开）</summary>
+    <div style="margin-top:12px;color:var(--ink2);line-height:1.8;font-size:13px">
+
+      <p><b>什么是 DeepSeek API Key？</b><br>
+      DeepSeek 开放平台提供大模型 API 服务（DeepSeek-V3 / R1 等）。本平台的「AI 摘要」和「LAMBDA 分析思路生成」均通过 DeepSeek API 实现，需要一个 API Key（以 <code style="color:var(--accent2)">sk-</code> 开头的字符串）进行身份认证。</p>
+
+      <hr style="border-color:var(--line);margin:14px 0">
+
+      <p><b>第 1 步：注册 DeepSeek 账号</b></p>
+      <ul style="padding-left:20px">
+        <li>访问开放平台：<a href="https://platform.deepseek.com" target="_blank" style="color:var(--accent2)">https://platform.deepseek.com</a></li>
+        <li>使用手机号或邮箱注册并登录</li>
+        <li>完成实名认证（个人/企业均可，个人认证较快）</li>
+      </ul>
+
+      <p><b>第 2 步：创建 API Key</b></p>
+      <ul style="padding-left:20px">
+        <li>登录后进入 <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">API Keys 管理页</a></li>
+        <li>点击「创建 API Key」，设置名称（如「数据爬虫」）</li>
+        <li>复制生成的 Key（<code style="color:var(--accent2)">sk-xxxxxxxx...</code>），<span style="color:var(--warn)">只显示一次，请妥善保存</span></li>
+      </ul>
+
+      <p><b>第 3 步：充值 / 购买额度</b></p>
+      <ul style="padding-left:20px">
+        <li>进入 <a href="https://platform.deepseek.com/fee" target="_blank" style="color:var(--accent2)">费用中心</a> 进行充值</li>
+        <li>支持支付宝、微信支付，最低充值 10 元起</li>
+        <li>新用户注册赠送 <b>500 万 tokens</b> 免费额度（约 500 万字），足够大量测试使用</li>
+      </ul>
+
+      <hr style="border-color:var(--line);margin:14px 0">
+
+      <p><b>💰 价格参考（2026 年）</b></p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0">
+        <thead>
+          <tr style="background:var(--bg-elev)">
+            <th style="border:1px solid var(--line);padding:8px;text-align:left">模型</th>
+            <th style="border:1px solid var(--line);padding:8px;text-align:center">输入价格</th>
+            <th style="border:1px solid var(--line);padding:8px;text-align:center">输出价格</th>
+            <th style="border:1px solid var(--line);padding:8px;text-align:left">适用场景</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="border:1px solid var(--line);padding:8px">deepseek-chat</td>
+            <td style="border:1px solid var(--line);padding:8px;text-align:center">¥1 / 百万 tokens</td>
+            <td style="border:1px solid var(--line);padding:8px;text-align:center">¥2 / 百万 tokens</td>
+            <td style="border:1px solid var(--line);padding:8px">通用对话、摘要、分类（默认推荐）</td>
+          </tr>
+          <tr>
+            <td style="border:1px solid var(--line);padding:8px">deepseek-reasoner</td>
+            <td style="border:1px solid var(--line);padding:8px;text-align:center">¥4 / 百万 tokens</td>
+            <td style="border:1px solid var(--line);padding:8px;text-align:center">¥16 / 百万 tokens</td>
+            <td style="border:1px solid var(--line);padding:8px">深度推理、复杂分析</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="color:var(--muted);font-size:12px">💡 1 百万 tokens ≈ 75 万字。爬虫 AI 摘要单次消耗约 2-5 万 tokens，10 元可跑数百次。</p>
+
+      <hr style="border-color:var(--line);margin:14px 0">
+
+      <p><b>第 4 步：在本平台使用 Key</b></p>
+      <ol style="padding-left:20px">
+        <li>回到上方「③ 输出设置」→「🤖 AI 摘要」区块</li>
+        <li>勾选「启用 AI 分类摘要」</li>
+        <li>将复制的 Key 粘贴到输入框（sk- 开头）</li>
+        <li>模型选 <code>deepseek-chat</code>（默认）或 <code>deepseek-reasoner</code></li>
+        <li>生成爬虫脚本后，Key 会写入脚本配置，不会上传到任何服务器</li>
+      </ol>
+
+      <p><b>LAMBDA 后端配置</b>：若启用 LAMBDA 分析，部署时 <code>setup_lambda.bat</code> 会提示输入同一个 Key，写入 <code>LAMBDA/backend/.env</code> 的 <code>OPENAI_API_KEY</code> 字段。</p>
+
+      <hr style="border-color:var(--line);margin:14px 0">
+
+      <p><b>❓ 常见问题</b></p>
+      <p><b>Q1：免费额度用完了怎么办？</b><br>
+      到费用中心充值即可，10 元起充，按量计费不设最低消费。</p>
+      <p><b>Q2：Key 泄露了怎么办？</b><br>
+      立即到 API Keys 管理页删除该 Key，重新创建一个。Key 只用于计费认证，删除后立即失效。</p>
+      <p><b>Q3：调用报错 401 Unauthorized？</b><br>
+      Key 填写错误或已被删除。检查是否多复制了空格，或重新创建 Key。</p>
+      <p><b>Q4：调用报错 429 / 余额不足？</b><br>
+      429 是频率限制（默认每分钟 60 次），稍等重试。余额不足请到费用中心充值。</p>
+      <p><b>Q5：支持国内支付吗？</b><br>
+      支持支付宝和微信支付，企业用户可开具发票。</p>
+      <p><b>Q6：数据安全吗？</b><br>
+      API 调用数据用于模型推理，DeepSeek 不会用于训练（可在平台设置中确认）。Key 仅保存在你本地的脚本中。</p>
+
+      <p style="margin-top:12px">
+        <a href="https://platform.deepseek.com" target="_blank" class="btn" style="padding:8px 20px;font-size:13px;background:var(--accent);color:#fff;text-decoration:none">🔗 前往 DeepSeek 开放平台</a>
+      </p>
+    </div>
+  </details>
 
   <!-- Python 安装引导 -->
   <details class="about-card" style="margin-top:18px">
@@ -5203,6 +5331,53 @@ else:
       使用方案 B 便携版，解压到非系统盘目录即可，无需管理员权限。</p>
       <p><b>Q4：下载速度慢或打不开？</b><br>
       优先用国内镜像（华为云/阿里云）；pip 安装用清华源。</p>
+    </div>
+  </details>
+
+  <!-- LAMBDA 部署指南 -->
+  <details class="about-card" style="margin-top:18px" id="lambda-deploy">
+    <summary style="cursor:pointer;font-weight:600;color:var(--warn)">🤖 LAMBDA 数据分析智能体部署指南（点击展开）</summary>
+    <div style="margin-top:12px;color:var(--ink2);line-height:1.8;font-size:13px">
+      <p><b>什么是 LAMBDA？</b><br>
+      LAMBDA 是香港理工大学开源的零代码数据分析智能体（JASA 2026 论文）。上传数据 + 自然语言提问，即可自动生成代码、运行分析、产出图表和报告。<br>
+      开源地址：<a href="https://github.com/AMA-CMFAI/LAMBDA" target="_blank" style="color:var(--accent2)">github.com/AMA-CMFAI/LAMBDA</a></p>
+
+      <p style="color:var(--warn)"><b>⚠ 为什么需要本地部署？</b><br>
+      LAMBDA 公共 Web 版（lambda.com.ai）无公开 API，且需邀请码。本地部署后可通过 API 自动调用，无次数限制，数据不外流。</p>
+
+      <hr style="border-color:var(--line);margin:14px 0">
+
+      <p><b>第 1 步：下载部署脚本</b></p>
+      <p>下载 <code style="color:var(--accent2)">setup_lambda.bat</code> 和 <code style="color:var(--accent2)">lambda_connector.py</code>，放到爬虫脚本同一目录。</p>
+      <p>👉 <button class="btn" style="padding:6px 16px;font-size:13px" onclick="downloadLambdaFiles()">下载 setup_lambda.bat + lambda_connector.py</button></p>
+
+      <p><b>第 2 步：一键部署 LAMBDA 后端</b></p>
+      <p>双击 <code>setup_lambda.bat</code>，脚本会自动完成：</p>
+      <ul style="padding-left:20px">
+        <li>克隆 LAMBDA 开源代码到当前目录</li>
+        <li>安装 Python 依赖（pip install -r requirements.txt）</li>
+        <li>提示输入 DeepSeek API Key 并写入 .env 配置（<a href="#deepseek-guide" onclick="document.getElementById('deepseek-guide').open=true" style="color:var(--accent2)">如何申请 Key？</a>）</li>
+        <li>启动 LAMBDA 后端（端口 8000）</li>
+      </ul>
+      <p>部署完成后，后端窗口不要关闭（关闭即停止服务）。</p>
+
+      <p><b>第 3 步：验证后端运行</b></p>
+      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">浏览器打开 http://localhost:8000/api/v1/health<br>看到 {"status":"healthy"} 即部署成功</pre>
+
+      <p><b>第 4 步：日常启动</b></p>
+      <p>以后只需双击 <code>start_lambda.bat</code> 即可启动后端（无需重新部署）。</p>
+
+      <hr style="border-color:var(--line);margin:14px 0">
+
+      <p><b>❓ 常见问题</b></p>
+      <p><b>Q1：提示缺少 Python 或 Git？</b><br>
+      需先安装 Python 3.11+ 和 Git。Python 下载：<a href="https://www.python.org/downloads/" target="_blank" style="color:var(--accent2)">python.org</a>，Git 下载：<a href="https://git-scm.com/download/win" target="_blank" style="color:var(--accent2)">git-scm.com</a></p>
+      <p><b>Q2：pip 安装依赖很慢？</b><br>
+      脚本已默认使用清华源。如仍失败，可手动执行：<code>pip install -r LAMBDA/backend/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple</code></p>
+      <p><b>Q3：DeepSeek Key 填错了想修改？</b><br>
+      编辑 <code>LAMBDA/backend/.env</code> 文件，修改 <code>OPENAI_API_KEY</code> 后重启后端即可。</p>
+      <p><b>Q4：后端启动失败？</b><br>
+      检查端口 8000 是否被占用；检查 .env 中 OPENAI_API_KEY 是否正确；查看后端窗口的报错信息。</p>
     </div>
   </details>
 
@@ -15721,6 +15896,222 @@ function toggleAuth(src){
 
 function pyStr(s){ return '"' + String(s||'').replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\n') + '"'; }
 
+// ============================================================
+// 中英文主题 → 英文检索词提取
+// ============================================================
+
+// 心理健康领域常用双语词典（兜底 + 增强翻译准确性）
+var MENTAL_HEALTH_DICT = {
+  "抑郁":"depression","抑郁症":"depressive disorder","焦虑":"anxiety","焦虑症":"anxiety disorder",
+  "压力":"stress","应激":"stress","创伤":"trauma","创伤后应激":"PTSD","ptsd":"PTSD",
+  "睡眠":"sleep","失眠":"insomnia","睡眠障碍":"sleep disorder","情绪":"emotion","情感":"affect",
+  "认知":"cognition","认知行为":"cognitive behavioral","cbt":"CBT","心理治疗":"psychotherapy",
+  "心理咨询":"psychological counseling","心理健康":"mental health","心理障碍":"mental disorder",
+  "精神障碍":"psychiatric disorder","精神分裂":"schizophrenia","双相":"bipolar disorder",
+  "强迫症":"OCD","强迫":"obsessive compulsive","注意缺陷":"ADHD","多动":"hyperactivity",
+  "自闭症":"autism","孤独症":"autism spectrum disorder","进食障碍":"eating disorder",
+  "物质滥用":"substance abuse","成瘾":"addiction","自杀":"suicide","自伤":"self-harm",
+  "孤独":"loneliness","社交焦虑":"social anxiety","恐惧":"phobia","恐慌":"panic",
+  "情绪调节":"emotion regulation","心理弹性":"resilience","应对":"coping","社会支持":"social support",
+  "家庭":"family","亲子":"parent-child","夫妻":"marital","婚姻":"marriage","亲密关系":"intimate relationship",
+  "儿童":"children","青少年":"adolescent","青年":"young adult","老年":"elderly","老年痴呆":"dementia",
+  "队列研究":"cohort study","纵向":"longitudinal","横断面":"cross-sectional","随机对照":"RCT",
+  "随机对照试验":"randomized controlled trial","meta分析":"meta-analysis","系统综述":"systematic review",
+  "生物标志物":"biomarker","神经影像":"neuroimaging","fmri":"fMRI","脑电图":"EEG",
+  "基因":"gene","遗传":"genetic","表观遗传":"epigenetic","炎症":"inflammation",
+  "肠道菌群":"gut microbiota","肠道微生物":"gut microbiome","神经营养":"neurotrophic",
+  "血清素":"serotonin","多巴胺":"dopamine","去甲肾上腺素":"norepinephrine",
+  "皮质醇":"cortisol","下丘脑":"hypothalamus","hpa轴":"HPA axis",
+  "机器学习":"machine learning","深度学习":"deep learning","人工智能":"artificial intelligence",
+  "网络分析":"network analysis","结构方程":"structural equation modeling","sem":"SEM",
+  "多层模型":"multilevel model","混合效应":"mixed effects","倾向得分":"propensity score",
+  "工具变量":"instrumental variable","因果推断":"causal inference","中介":"mediation",
+  "调节":"moderation","交互":"interaction"
+};
+
+function hasChinese(s){ return /[\u4e00-\u9fa5]/.test(s); }
+
+function crawlTopicInput(val){
+  var status = document.getElementById('kw-status');
+  if(!val.trim()){ status.style.display='none'; return; }
+  if(hasChinese(val)){
+    status.style.display='block';
+    status.innerHTML = '💡 检测到中文主题，建议点击「🔄 提取英文检索词」将其转为英文检索词，以提升学术数据库召回率。';
+    status.style.color = 'var(--accent2)';
+  } else {
+    status.style.display='block';
+    status.innerHTML = '✅ 当前为英文主题，可直接使用；也可点击「🔄 提取英文检索词」生成更多关键词组合。';
+    status.style.color = 'var(--muted)';
+  }
+}
+
+// 从双语词典替换已知术语
+function applyDict(text){
+  var result = text;
+  Object.keys(MENTAL_HEALTH_DICT).forEach(function(zh){
+    var en = MENTAL_HEALTH_DICT[zh];
+    if(result.indexOf(zh) >= 0){
+      result = result.split(zh).join(en);
+    }
+  });
+  return result;
+}
+
+// 用 MyMemory 免费翻译 API（无需 Key）
+function translateMyMemory(text, from, to){
+  var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=' + from + '|' + to;
+  return fetch(url).then(function(r){ return r.json(); }).then(function(j){
+    return j.responseData && j.responseData.translatedText ? j.responseData.translatedText : text;
+  }).catch(function(){ return text; });
+}
+
+// 用 DeepSeek 翻译 + 提取关键词（若用户提供了 Key，质量更高）
+function translateDeepSeek(text, key, model){
+  var prompt = '将以下研究主题翻译为英文，并提取 5-10 个最具检索价值的英文关键词/短语（用逗号分隔，只输出关键词，不要解释）：\n' + text;
+  return fetch('https://api.deepseek.com/chat/completions',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+    body: JSON.stringify({model:model||'deepseek-chat',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.3})
+  }).then(function(r){ return r.json(); }).then(function(j){
+    return j.choices && j.choices[0] ? j.choices[0].message.content : '';
+  }).catch(function(){ return ''; });
+}
+
+// 主函数：提取英文检索词
+async function extractEnglishKeywords(){
+  var topic = document.getElementById('crawl-topic').value.trim();
+  if(!topic){ alert('请先输入研究主题'); return; }
+
+  var statusEl = document.getElementById('kw-status');
+  var resultEl = document.getElementById('kw-result');
+  var textareaEl = document.getElementById('crawl-keywords');
+
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.innerHTML = '⏳ 正在翻译并提取英文检索词...';
+
+  var englishText = '';
+  var deepseekKey = document.getElementById('c-deepseek-key').value.trim();
+
+  if(hasChinese(topic)){
+    // 中文主题：先尝试 DeepSeek（质量更高），失败则用 MyMemory
+    if(deepseekKey){
+      try{
+        statusEl.innerHTML = '⏳ 使用 DeepSeek 翻译与关键词提取...';
+        englishText = await translateDeepSeek(topic, deepseekKey, document.getElementById('c-llm-model').value);
+      }catch(e){ englishText = ''; }
+    }
+    if(!englishText){
+      // MyMemory 翻译
+      statusEl.innerHTML = '⏳ 使用翻译服务处理中...';
+      var dictAugmented = applyDict(topic);
+      englishText = await translateMyMemory(dictAugmented, 'zh-CN', 'en');
+      // 如果翻译结果仍含大量中文，再试一次纯原文
+      if(hasChinese(englishText)){
+        englishText = await translateMyMemory(topic, 'zh-CN', 'en');
+      }
+    }
+  } else {
+    // 英文主题：直接用
+    englishText = topic;
+  }
+
+  if(!englishText){ englishText = topic; }
+
+  // 拆分为关键词组合
+  var keywords = extractKeywordCombinations(englishText, topic);
+
+  // 去重、清洗
+  keywords = keywords.filter(function(k,i,arr){ return k && arr.indexOf(k)===i; });
+  keywords = keywords.map(function(k){ return k.trim().toLowerCase().replace(/[^\w\s-]/g,'').trim(); }).filter(function(k){ return k.length>1; });
+  // 再次去重
+  keywords = keywords.filter(function(k,i,arr){ return arr.indexOf(k)===i; });
+
+  // 显示结果
+  textareaEl.value = keywords.join(', ');
+  resultEl.style.display = 'block';
+
+  renderKeywordChips(keywords);
+
+  statusEl.innerHTML = '✅ 已生成 ' + keywords.length + ' 个英文检索词，可在下方编辑调整。';
+  statusEl.style.color = 'var(--accent2)';
+}
+
+// 从翻译文本 + 原主题提取关键词组合
+function extractKeywordCombinations(englishText, originalTopic){
+  var kws = [];
+
+  // 1. 翻译后的完整短语（去掉标点）
+  var clean = englishText.replace(/[^\w\s,-]/g,'').replace(/\s+/g,' ').trim();
+  if(clean) kws.push(clean);
+
+  // 2. 按逗号/分号拆分的短语
+  clean.split(/[,;]/).forEach(function(p){
+    p = p.trim();
+    if(p && p.length>2) kws.push(p);
+  });
+
+  // 3. 按空格拆分的单词组合（2-gram 和 1-gram 重要词）
+  var words = clean.split(/\s+/).filter(function(w){ return w.length>2; });
+  // 停用词
+  var stopwords = {'the':1,'and':1,'of':1,'in':1,'on':1,'for':1,'to':1,'a':1,'an':1,'with':1,'by':1,'is':1,'are':1,'was':1,'were':1,'be':1,'been':1,'being':1,'this':1,'that':1,'these':1,'those':1,'it':1,'its':1,'as':1,'at':1,'or':1,'but':1,'not':1,'no':1,'from':1,'between':1,'among':1,'within':1,'into':1,'about':1,'over':1,'under':1,'during':1,'before':1,'after':1,'than':1,'then':1,'so':1,'if':1,'when':1,'where':1,'which':1,'who':1,'whom':1,'whose':1,'what':1,'how':1,'why':1,'can':1,'could':1,'may':1,'might':1,'will':1,'would':1,'should':1,'shall':1,'do':1,'does':1,'did':1,'have':1,'has':1,'had':1,'using':1,'use':1,'used':1,'based':1,'among':1,'study':1,'studies':1,'research':1,'analysis':1,'method':1,'methods':1,'approach':1};
+
+  var meaningful = words.filter(function(w){ return !stopwords[w.toLowerCase()]; });
+
+  // 2-gram 组合
+  for(var i=0; i<meaningful.length-1; i++){
+    kws.push(meaningful[i] + ' ' + meaningful[i+1]);
+  }
+  // 单个重要词（长度>3）
+  meaningful.forEach(function(w){
+    if(w.length>3) kws.push(w);
+  });
+
+  // 4. 原主题如果已经是英文，也加入拆分
+  if(!hasChinese(originalTopic)){
+    originalTopic.split(/[\s,;]+/).forEach(function(w){
+      w = w.trim();
+      if(w.length>2 && !stopwords[w.toLowerCase()]) kws.push(w);
+    });
+  }
+
+  return kws;
+}
+
+// 渲染关键词标签
+function renderKeywordChips(keywords){
+  var chipsEl = document.getElementById('kw-chips');
+  chipsEl.innerHTML = '';
+  keywords.slice(0, 20).forEach(function(kw){
+    var chip = document.createElement('span');
+    chip.style.cssText = 'display:inline-block;padding:4px 12px;background:var(--bg-elev);border:1px solid var(--line);border-radius:14px;font-size:12px;color:var(--ink2);cursor:pointer;transition:all .15s';
+    chip.textContent = kw;
+    chip.onmouseover = function(){ this.style.background='var(--accent)'; this.style.color='#fff'; };
+    chip.onmouseout = function(){ this.style.background='var(--bg-elev)'; this.style.color='var(--ink2)'; };
+    chip.onclick = function(){
+      // 点击删除该关键词
+      var ta = document.getElementById('crawl-keywords');
+      var arr = ta.value.split(/,\s*/);
+      arr = arr.filter(function(k){ return k.trim().toLowerCase() !== kw.toLowerCase(); });
+      ta.value = arr.join(', ');
+      renderKeywordChips(ta.value.split(/,\s*/).filter(function(k){return k.trim();}));
+    };
+    chip.title = '点击删除';
+    chipsEl.appendChild(chip);
+  });
+}
+
+// textarea 变化时同步更新 chips
+document.addEventListener('DOMContentLoaded', function(){
+  var ta = document.getElementById('crawl-keywords');
+  if(ta){
+    ta.addEventListener('input', function(){
+      var kws = this.value.split(/,\s*/).filter(function(k){return k.trim();});
+      renderKeywordChips(kws);
+    });
+  }
+});
+
 function generateCrawlerScript(){
   var msg = document.getElementById('crawl-msg');
   msg.style.color = 'var(--muted)';
@@ -15751,10 +16142,15 @@ function generateCrawlerScript(){
   var maxSrc = parseInt(document.getElementById('crawl-max').value)||30;
   var yearMin = parseInt(document.getElementById('crawl-year').value)||0;
 
+  // 英文检索词（用户提取/编辑后的）
+  var keywordsEl = document.getElementById('crawl-keywords');
+  var keywords = keywordsEl ? keywordsEl.value.split(/,\s*/).filter(function(k){return k.trim();}) : [];
+
   // 构建 Python CONFIG dict
   var configLines = [
     '{',
     '    "topic": ' + pyStr(topic) + ',',
+    '    "keywords": ' + JSON.stringify(keywords) + ',',
     '    "max_per_source": ' + maxSrc + ',',
     '    "year_min": ' + yearMin + ',',
     '    "output_dir": "./crawl_output",',
@@ -15776,6 +16172,18 @@ function generateCrawlerScript(){
   configLines.push('        "kaggle": {"username": ' + pyStr(creds.kaggle.username) + ', "key": ' + pyStr(creds.kaggle.key) + '},');
   configLines.push('        "weibo": {"sub": ' + pyStr(creds.weibo.sub) + ', "auto_login": ' + (creds.weibo.auto_login ? 'True' : 'False') + '}');
   configLines.push('    },');
+  // LAMBDA 智能分析配置
+  var useLambda = document.getElementById('c-use-lambda').checked;
+  var lambdaUrl = document.getElementById('c-lambda-url').value.trim() || 'http://localhost:8000';
+  var lambdaModel = document.getElementById('c-lambda-model').value.trim() || 'deepseek-chat';
+  var lambdaIdeas = parseInt(document.getElementById('c-lambda-ideas').value) || 5;
+  configLines.push('    "use_lambda": ' + (useLambda ? 'True' : 'False') + ',');
+  configLines.push('    "lambda": {');
+  configLines.push('        "base_url": ' + pyStr(lambdaUrl) + ',');
+  configLines.push('        "model": ' + pyStr(lambdaModel) + ',');
+  configLines.push('        "num_ideas": ' + lambdaIdeas + ',');
+  configLines.push('        "upload_data_files": True');
+  configLines.push('    },');
   configLines.push('}');
 
   var configStr = configLines.join('\n');
@@ -15796,8 +16204,401 @@ function generateCrawlerScript(){
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 
-  msg.innerHTML = '✅ 脚本已生成：<b>' + filename + '</b><br>请在本地运行：<code>pip install python-docx requests beautifulsoup4</code> 然后 <code>python ' + filename + '</code><br><span style="color:var(--muted);font-size:12px">（启用微博自动登录还需：<code>pip install playwright && playwright install chromium</code>）</span><br><span style="color:var(--warn)">本地未安装 Python？请展开下方「🐍 Python 安装引导」按步骤操作。</span>';
+  var lambdaNote = useLambda ? '<br><span style="color:var(--warn)">⚠ 已启用 LAMBDA 分析，请确保后端已启动（运行 start_lambda.bat），且 lambda_connector.py 与爬虫脚本同目录</span>' : '';
+  msg.innerHTML = '✅ 脚本已生成：<b>' + filename + '</b><br>请在本地运行：<code>pip install python-docx requests beautifulsoup4</code> 然后 <code>python ' + filename + '</code><br><span style="color:var(--muted);font-size:12px">（启用微博自动登录还需：<code>pip install playwright && playwright install chromium</code>）</span>' + lambdaNote + '<br><span style="color:var(--warn)">本地未安装 Python？请展开下方「🐍 Python 安装引导」按步骤操作。</span>';
 }
+
+// 下载 LAMBDA 部署相关文件
+function downloadLambdaFiles(){
+  // setup_lambda.bat
+  var bat = '@echo off\r\nchcp 65001 >nul 2>&1\r\ntitle LAMBDA 后端一键部署\r\ncolor 0B\r\necho ============================================================\r\necho   LAMBDA 后端一键部署脚本\r\necho ============================================================\r\necho.\r\necho 前置要求：Python 3.11+ 和 Git\r\necho.\r\npython --version >nul 2>&1 || (echo [错误] 未检测到 Python & pause & exit /b 1)\r\ngit --version >nul 2>&1 || (echo [错误] 未检测到 Git & pause & exit /b 1)\r\n\r\nset LAMBDA_DIR=%~dp0LAMBDA\r\nif exist "%LAMBDA_DIR%" (\r\n  echo [信息] 已存在 LAMBDA 目录，尝试更新...\r\n  cd /d "%LAMBDA_DIR%" && git pull\r\n) else (\r\n  echo [1/4] 克隆 LAMBDA 代码...\r\n  git clone https://github.com/AMA-CMFAI/LAMBDA.git "%LAMBDA_DIR%"\r\n)\r\n\r\necho [2/4] 安装依赖...\r\ncd /d "%LAMBDA_DIR%\\backend"\r\npython -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple\r\n\r\necho [3/4] 配置 .env...\r\nif not exist ".env" copy .env.example .env >nul\r\necho 请输入 DeepSeek API Key (sk-xxx):\r\nset /p KEY=Key: \r\npowershell -Command "(Get-Content .env) -replace ''^OPENAI_API_KEY=.*'', ''OPENAI_API_KEY=%KEY%'' | Set-Content .env"\r\npowershell -Command "(Get-Content .env) -replace ''^OPENAI_BASE_URL=.*'', ''OPENAI_BASE_URL=https://api.deepseek.com/v1'' | Set-Content .env"\r\n\r\necho [4/4] 启动后端...\r\necho 后端地址: http://localhost:8000\r\necho 按 Ctrl+C 停止\r\npython -m uvicorn main:app --host 0.0.0.0 --port 8000\r\npause\r\n';
+  var blob1 = new Blob([bat], {type: 'application/bat'});
+  var a1 = document.createElement('a');
+  a1.href = URL.createObjectURL(blob1);
+  a1.download = 'setup_lambda.bat';
+  document.body.appendChild(a1); a1.click(); document.body.removeChild(a1);
+  URL.revokeObjectURL(a1.href);
+
+  // start_lambda.bat
+  var start = '@echo off\r\nchcp 65001 >nul 2>&1\r\ntitle LAMBDA 后端\r\nset D=%~dp0LAMBDA\\backend\r\nif not exist "%D%" (echo 未找到 LAMBDA，请先运行 setup_lambda.bat & pause & exit /b 1)\r\ncd /d "%D%"\r\necho 后端: http://localhost:8000  (Ctrl+C 停止)\r\npython -m uvicorn main:app --host 0.0.0.0 --port 8000\r\npause\r\n';
+  var blob2 = new Blob([start], {type: 'application/bat'});
+  var a2 = document.createElement('a');
+  a2.href = URL.createObjectURL(blob2);
+  a2.download = 'start_lambda.bat';
+  document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+  URL.revokeObjectURL(a2.href);
+
+  // lambda_connector.py - 从当前页面内嵌的模板生成
+  var connector = document.getElementById('lambda-connector-template');
+  if(connector){
+    var blob3 = new Blob([connector.textContent], {type: 'text/x-python;charset=utf-8'});
+    var a3 = document.createElement('a');
+    a3.href = URL.createObjectURL(blob3);
+    a3.download = 'lambda_connector.py';
+    document.body.appendChild(a3); a3.click(); document.body.removeChild(a3);
+    URL.revokeObjectURL(a3.href);
+  }
+  alert('已下载 setup_lambda.bat、start_lambda.bat、lambda_connector.py\n请将它们放到爬虫脚本同一目录。');
+}
+</script>
+
+<script type="text/plain" id="lambda-connector-template">#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+LAMBDA 数据分析智能体连接器
+将爬虫输出的数据接入自托管的 LAMBDA 后端，自动生成分析思路、
+调用 LAMBDA 分析，并汇总分析过程与结果。
+依赖：requests
+"""
+import os, sys, json, time, glob, csv, re
+import urllib.request
+from datetime import datetime
+
+try:
+    import requests
+except ImportError:
+    print("[LAMBDA] 缺少依赖 requests，请运行: pip install requests")
+    sys.exit(1)
+
+
+class LambdaClient:
+    def __init__(self, base_url="http://localhost:8000", timeout=300):
+        self.base_url = base_url.rstrip("/")
+        self.api = f"{self.base_url}/api/v1"
+        self.timeout = timeout
+
+    def health_check(self):
+        try:
+            r = requests.get(f"{self.api}/health", timeout=10)
+            if r.status_code == 200:
+                return True, "LAMBDA 后端运行正常"
+            return False, f"后端响应异常: HTTP {r.status_code}"
+        except requests.exceptions.ConnectionError:
+            return False, "无法连接 LAMBDA 后端，请确认已启动"
+        except Exception as e:
+            return False, f"健康检查失败: {e}"
+
+    def create_conversation(self, title="数据分析", model=None):
+        body = {"title": title[:50]}
+        if model:
+            body["model"] = model
+        r = requests.post(f"{self.api}/conversations", json=body, timeout=30)
+        r.raise_for_status()
+        data = r.json()
+        return data.get("hash_id") or data.get("id")
+
+    def get_conversation(self, conv_id):
+        r = requests.get(f"{self.api}/conversations/{conv_id}", timeout=30)
+        r.raise_for_status()
+        return r.json()
+
+    def upload_file(self, file_path, conversation_id=None):
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(file_path)
+        with open(file_path, "rb") as f:
+            files = {"file": (os.path.basename(file_path), f)}
+            data = {}
+            if conversation_id:
+                data["conversation_id"] = conversation_id
+            r = requests.post(f"{self.api}/files/upload", files=files, data=data, timeout=120)
+        r.raise_for_status()
+        return r.json()["id"]
+
+    def list_session_files(self, conversation_id):
+        try:
+            r = requests.get(f"{self.api}/files/session/{conversation_id}", timeout=30)
+            if r.status_code == 200:
+                return r.json()
+        except Exception:
+            pass
+        return []
+
+    def chat(self, message, conversation_id=None, file_ids=None,
+             analysis_mode=None, language="zh", model=None):
+        body = {"message": message, "language": language}
+        if conversation_id:
+            body["conversation_id"] = conversation_id
+        if file_ids:
+            body["files"] = file_ids
+        if analysis_mode:
+            body["analysis_mode"] = analysis_mode
+        if model:
+            body["model"] = model
+        events = []
+        try:
+            with requests.post(f"{self.api}/chat", json=body, stream=True, timeout=self.timeout) as r:
+                r.raise_for_status()
+                for line in r.iter_lines(decode_unicode=True):
+                    if not line or not line.startswith("data: "):
+                        continue
+                    payload = line[6:]
+                    if payload == "[DONE]":
+                        break
+                    try:
+                        events.append(json.loads(payload))
+                    except json.JSONDecodeError:
+                        events.append({"type": "raw", "content": payload})
+        except requests.exceptions.ReadTimeout:
+            events.append({"type": "error", "content": "分析超时"})
+        except Exception as e:
+            events.append({"type": "error", "content": str(e)})
+        return events
+
+    def export_notebook(self, conversation_id):
+        r = requests.post(f"{self.api}/export/notebook",
+                          json={"conversation_id": conversation_id}, timeout=120)
+        r.raise_for_status()
+        return r.content
+
+    def download_file(self, url_or_path, save_path):
+        try:
+            if url_or_path.startswith("http"):
+                r = requests.get(url_or_path, timeout=60)
+            else:
+                full_url = f"{self.base_url}{url_or_path}" if url_or_path.startswith("/") else url_or_path
+                r = requests.get(full_url, timeout=60)
+            r.raise_for_status()
+            os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
+            with open(save_path, "wb") as f:
+                f.write(r.content)
+            return True
+        except Exception:
+            return False
+
+
+def generate_analysis_ideas(topic, literature, datasets, social, deepseek_key, model="deepseek-chat", n=5):
+    if not deepseek_key:
+        return _fallback_ideas(topic, n)
+    lit_text = "\n".join(f"{i+1}. {x.get('title','')} ({x.get('year','')})" for i, x in enumerate(literature[:30]))
+    ds_text = "\n".join(f"{i+1}. {x.get('title','')}" for i, x in enumerate(datasets[:15]))
+    soc_text = "\n".join(f"{i+1}. [{x.get('source','')}] {x.get('title','')[:60]}" for i, x in enumerate(social[:20]))
+    prompt = f"""你是数据分析专家。基于以下「{topic}」爬取数据，生成 {n} 条分析思路。
+文献（{len(literature)}条）：
+{lit_text}
+数据集（{len(datasets)}条）：
+{ds_text}
+社交媒体（{len(social)}条）：
+{soc_text}
+输出 JSON 数组，每条含: dimension(维度), question(问题), method(方法), expected_output(预期输出)。只输出JSON。"""
+    body = json.dumps({"model": model, "messages": [{"role": "user", "content": prompt}],
+                       "temperature": 0.4, "max_tokens": 4096, "response_format": {"type": "json_object"}}).encode("utf-8")
+    req = urllib.request.Request("https://api.deepseek.com/chat/completions", data=body,
+                                 headers={"Authorization": f"Bearer {deepseek_key}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            content = json.loads(resp.read().decode("utf-8"))["choices"][0]["message"]["content"]
+            try:
+                parsed = json.loads(content)
+                ideas = parsed if isinstance(parsed, list) else parsed.get("ideas", [])
+                return ideas[:n]
+            except json.JSONDecodeError:
+                m = re.search(r'\[.*\]', content, re.DOTALL)
+                if m:
+                    return json.loads(m.group())[:n]
+                return _fallback_ideas(topic, n)
+    except Exception as e:
+        print(f"[LAMBDA] 思路生成失败，使用兜底模板: {e}")
+        return _fallback_ideas(topic, n)
+
+
+def _fallback_ideas(topic, n):
+    templates = [
+        {"dimension": "描述统计", "question": f"对{topic}数据集进行描述性统计，识别分布、缺失值和异常值",
+         "method": "pandas describe + boxplot", "expected_output": "描述统计表 + 缺失值热力图"},
+        {"dimension": "相关性分析", "question": f"分析{topic}关键变量之间的相关性",
+         "method": "pearson相关系数 + 热力图", "expected_output": "相关性矩阵热力图"},
+        {"dimension": "时间趋势", "question": f"分析{topic}指标随时间的变化趋势",
+         "method": "时间序列 + 折线图", "expected_output": "趋势折线图"},
+        {"dimension": "分组比较", "question": f"比较不同组别在{topic}指标上的差异",
+         "method": "t检验/方差分析 + 箱线图", "expected_output": "组间比较表 + 箱线图"},
+        {"dimension": "预测建模", "question": f"构建{topic}结果的预测模型",
+         "method": "逻辑回归/随机森林 + ROC", "expected_output": "模型指标 + ROC曲线"},
+        {"dimension": "文本挖掘", "question": f"挖掘{topic}文献和社媒的主题与情感",
+         "method": "LDA主题模型 + 情感分析", "expected_output": "主题词云 + 情感分布"},
+        {"dimension": "地理分布", "question": f"分析{topic}在不同地区的分布差异",
+         "method": "地区统计 + 地图可视化", "expected_output": "地区分布地图"},
+        {"dimension": "聚类分析", "question": f"对{topic}样本聚类识别亚型",
+         "method": "K-means + t-SNE可视化", "expected_output": "聚类结果 + t-SNE散点图"},
+        {"dimension": "因子分析", "question": f"提取{topic}多指标的潜在因子结构",
+         "method": "探索性因子分析EFA", "expected_output": "因子载荷矩阵"},
+        {"dimension": "生存分析", "question": f"分析{topic}事件的时间分布",
+         "method": "Kaplan-Meier + Cox回归", "expected_output": "生存曲线 + 风险比"},
+    ]
+    return templates[:n]
+
+
+def generate_dialogue_reference(topic, ideas, literature, datasets, social):
+    lines = [f"# {topic} - 数据分析对话参考\n",
+             f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n",
+             f"**数据规模**: 文献 {len(literature)} 条 | 数据集 {len(datasets)} 条 | 社交媒体 {len(social)} 条\n",
+             "---\n", "## 推荐分析思路\n"]
+    for i, idea in enumerate(ideas, 1):
+        lines.append(f"### {i}. {idea.get('dimension','未分类')}\n")
+        lines.append(f"**分析问题**: {idea.get('question','')}\n")
+        lines.append(f"**建议方法**: {idea.get('method','')}\n")
+        lines.append(f"**预期输出**: {idea.get('expected_output','')}\n")
+        lines.append(f"**💬 可直接向 LAMBDA 提问**:\n")
+        lines.append(f"> {idea.get('question','')}。请使用 {idea.get('method','')}，生成可视化并解释结果。\n")
+    lines.append("---\n## 使用说明\n1. 上传数据文件\n2. 复制上方提问发送给 LAMBDA\n3. LAMBDA 自动分析并生成图表报告\n")
+    return "\n".join(lines)
+
+
+def run_lambda_analysis(out_dir, topic, lambda_config):
+    print("\n" + "=" * 60)
+    print("[LAMBDA] 开始智能数据分析")
+    print("=" * 60)
+    base_url = lambda_config.get("base_url", "http://localhost:8000")
+    model = lambda_config.get("model", "deepseek-chat")
+    num_ideas = int(lambda_config.get("num_ideas", 5))
+    deepseek_key = lambda_config.get("deepseek_key", "")
+    upload_data_files = lambda_config.get("upload_data_files", True)
+    client = LambdaClient(base_url)
+    ok, msg = client.health_check()
+    if not ok:
+        print(f"[LAMBDA] {msg}")
+        print("[LAMBDA] 请先运行 setup_lambda.bat 部署并启动后端")
+        return False
+    print(f"[LAMBDA] {msg}")
+    literature = _load_csv(os.path.join(out_dir, "literature.csv"))
+    datasets = _load_csv(os.path.join(out_dir, "datasets.csv"))
+    social = _load_csv(os.path.join(out_dir, "social_media.csv"))
+    if not literature and not datasets:
+        print("[LAMBDA] 无文献或数据集可分析，跳过")
+        return False
+    print(f"[LAMBDA] 生成 {num_ideas} 条分析思路 ...")
+    ideas = generate_analysis_ideas(topic, literature, datasets, social, deepseek_key, model, num_ideas)
+    print(f"[LAMBDA] 已生成 {len(ideas)} 条分析思路")
+    analysis_dir = os.path.join(out_dir, "lambda_analysis")
+    os.makedirs(analysis_dir, exist_ok=True)
+    notebooks_dir = os.path.join(analysis_dir, "notebooks")
+    charts_dir = os.path.join(analysis_dir, "charts")
+    os.makedirs(notebooks_dir, exist_ok=True)
+    os.makedirs(charts_dir, exist_ok=True)
+    dialogue_ref = generate_dialogue_reference(topic, ideas, literature, datasets, social)
+    with open(os.path.join(analysis_dir, "dialogue_reference.md"), "w", encoding="utf-8") as f:
+        f.write(dialogue_ref)
+    print("[LAMBDA] 对话参考已保存: dialogue_reference.md")
+    file_ids = []
+    if upload_data_files:
+        for fp in [os.path.join(out_dir, "datasets.csv"), os.path.join(out_dir, "literature.csv")]:
+            if os.path.exists(fp) and os.path.getsize(fp) < 30 * 1024 * 1024:
+                try:
+                    fid = client.upload_file(fp)
+                    file_ids.append(fid)
+                    print(f"[LAMBDA] 已上传: {os.path.basename(fp)}")
+                except Exception as e:
+                    print(f"[LAMBDA] 上传失败: {e}")
+        df_dir = os.path.join(out_dir, "data_files")
+        if os.path.isdir(df_dir):
+            for fp in _find_data_files(df_dir)[:3]:
+                try:
+                    file_ids.append(client.upload_file(fp))
+                    print(f"[LAMBDA] 已上传数据文件: {os.path.basename(fp)}")
+                except Exception as e:
+                    print(f"[LAMBDA] 数据文件上传失败: {e}")
+    analysis_process = []
+    report_sections = []
+    for idx, idea in enumerate(ideas, 1):
+        dimension = idea.get("dimension", f"分析{idx}")
+        question = idea.get("question", "")
+        method = idea.get("method", "")
+        print(f"\n[LAMBDA] 分析 {idx}/{len(ideas)}: {dimension}")
+        try:
+            conv_id = client.create_conversation(title=f"{topic}-{dimension}", model=model)
+        except Exception as e:
+            print(f"[LAMBDA] 创建对话失败: {e}")
+            continue
+        message = f"分析维度：{dimension}\n分析问题：{question}\n建议方法：{method}\n\n请基于上传数据分析，生成可视化图表并给出结论。用中文回答。"
+        events = client.chat(message=message, conversation_id=conv_id, file_ids=file_ids,
+                             analysis_mode=None, language="zh", model=model)
+        answer_parts = []
+        for evt in events:
+            t = evt.get("type", "")
+            c = evt.get("content", "")
+            if t in ("message", "assistant", "text") and c:
+                answer_parts.append(c)
+            elif t == "error":
+                print(f"[LAMBDA] 错误: {c}")
+        answer = "".join(answer_parts).strip()
+        if not answer:
+            try:
+                conv = client.get_conversation(conv_id)
+                for m in conv.get("messages", []):
+                    if m.get("role") == "assistant":
+                        answer = m.get("content", "")
+            except Exception:
+                pass
+        try:
+            nb = client.export_notebook(conv_id)
+            with open(os.path.join(notebooks_dir, f"idea_{idx:02d}_{_safe_name(dimension)}.ipynb"), "wb") as f:
+                f.write(nb)
+            print(f"[LAMBDA] Notebook 已保存")
+        except Exception as e:
+            print(f"[LAMBDA] Notebook 导出失败: {e}")
+        try:
+            for f_info in client.list_session_files(conv_id):
+                fname = f_info.get("name") or f_info.get("filename", "")
+                furl = f_info.get("url") or f_info.get("proxy_url", "")
+                if fname.lower().endswith((".png", ".jpg", ".jpeg", ".svg", ".pdf")):
+                    if client.download_file(furl, os.path.join(charts_dir, f"idea{idx}_{fname}")):
+                        print(f"[LAMBDA] 图表已下载: idea{idx}_{fname}")
+        except Exception:
+            pass
+        analysis_process.append({"idea_index": idx, "dimension": dimension, "question": question,
+                                 "method": method, "conversation_id": conv_id,
+                                 "answer": answer[:5000], "events_count": len(events)})
+        report_sections.append(f"## {idx}. {dimension}\n\n**问题**: {question}\n\n**方法**: {method}\n\n**分析结果**:\n\n{answer}\n")
+        print(f"[LAMBDA] 分析 {idx} 完成（{len(answer)} 字符）")
+        time.sleep(2)
+    with open(os.path.join(analysis_dir, "analysis_process.json"), "w", encoding="utf-8") as f:
+        json.dump({"topic": topic, "timestamp": datetime.now().isoformat(),
+                   "num_ideas": len(ideas), "ideas": ideas, "process": analysis_process},
+                  f, ensure_ascii=False, indent=2)
+    print("[LAMBDA] 分析过程已保存: analysis_process.json")
+    report = f"# {topic} - LAMBDA 智能分析报告\n\n**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n**分析思路数**: {len(ideas)}\n\n---\n\n"
+    report += "\n\n".join(report_sections)
+    with open(os.path.join(analysis_dir, "analysis_report.md"), "w", encoding="utf-8") as f:
+        f.write(report)
+    print("[LAMBDA] 分析报告已保存: analysis_report.md")
+    print("\n" + "=" * 60)
+    print(f"[LAMBDA] 分析完成！输出目录: {os.path.abspath(analysis_dir)}")
+    print("=" * 60)
+    return True
+
+
+def _load_csv(path):
+    if not os.path.exists(path):
+        return []
+    items = []
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            for row in csv.DictReader(f):
+                items.append(dict(row))
+    except Exception:
+        pass
+    return items
+
+
+def _find_data_files(data_dir):
+    patterns = ["*.csv", "*.xlsx", "*.xls", "*.json", "*.tsv"]
+    files = []
+    for pat in patterns:
+        files.extend(glob.glob(os.path.join(data_dir, "**", pat), recursive=True))
+    return [f for f in files if os.path.getsize(f) < 25 * 1024 * 1024]
+
+
+def _safe_name(s):
+    return re.sub(r"[^\w\u4e00-\u9fff]", "_", s)[:20]
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("用法: python lambda_connector.py <out_dir> <topic> [base_url] [num_ideas]")
+        sys.exit(1)
+    cfg = {"base_url": sys.argv[3] if len(sys.argv) > 3 else "http://localhost:8000",
+           "model": "deepseek-chat", "num_ideas": int(sys.argv[4]) if len(sys.argv) > 4 else 5,
+           "deepseek_key": os.environ.get("DEEPSEEK_KEY", ""), "upload_data_files": True}
+    run_lambda_analysis(sys.argv[1], sys.argv[2], cfg)
 </script>
 
 </body></html>
