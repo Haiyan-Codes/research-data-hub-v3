@@ -16238,7 +16238,18 @@ function downloadLambdaFiles(){
     document.body.appendChild(a3); a3.click(); document.body.removeChild(a3);
     URL.revokeObjectURL(a3.href);
   }
-  alert('已下载 setup_lambda.bat、start_lambda.bat、lambda_connector.py\n请将它们放到爬虫脚本同一目录。');
+  // 页面内提示（替代 alert，避免阻塞）
+  var tip = document.getElementById('lambda-dl-tip');
+  if(!tip){
+    tip = document.createElement('div');
+    tip.id = 'lambda-dl-tip';
+    tip.style.cssText = 'margin-top:10px;padding:10px 14px;background:rgba(34,197,94,.12);border:1px solid var(--ok);border-radius:8px;color:var(--ok);font-size:13px;line-height:1.6';
+    var btn = document.querySelector('button[onclick="downloadLambdaFiles()"]');
+    if(btn && btn.parentNode) btn.parentNode.appendChild(tip);
+  }
+  tip.innerHTML = '✅ 已下载 <b>setup_lambda.bat</b>、<b>start_lambda.bat</b>、<b>lambda_connector.py</b><br>请将它们放到爬虫脚本同一目录。';
+  tip.style.display = 'block';
+  setTimeout(function(){ if(tip) tip.style.display='none'; }, 8000);
 }
 </script>
 
