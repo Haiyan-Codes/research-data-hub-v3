@@ -87,7 +87,7 @@ main{max-width:1200px;margin:0 auto;padding:32px 28px 80px;position:relative;z-i
 .btn.primary:hover{background:linear-gradient(135deg,#6d28d9,#0891b2);color:#fff;text-decoration:none;box-shadow:0 6px 28px var(--accent-glow)}
 .btn.teal{background:linear-gradient(135deg,var(--accent2),var(--accent));border-color:transparent;color:#fff;box-shadow:0 4px 20px var(--accent2-glow)}.btn.teal:hover{background:linear-gradient(135deg,#0891b2,#6d28d9);color:#fff}
 .btn.violet{background:linear-gradient(135deg,#8b5cf6,#22d3ee);border-color:transparent;color:#fff;box-shadow:0 4px 20px rgba(139,92,246,.35)}.btn.violet:hover{background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;transform:translateY(-1px)}
-.btn.amber{background:linear-gradient(135deg,#f59e0b,#ef4444);border-color:transparent;color:#fff;box-shadow:0 4px 20px rgba(245,158,11,.35)}.btn.amber:hover{background:linear-gradient(135deg,#d97706,#dc2626);color:#fff;transform:translateY(-1px)}
+.btn.amber{background:linear-gradient(135deg,#6366f1,#06b6d4);border-color:transparent;color:#fff;box-shadow:0 4px 20px rgba(99,102,241,.35)}.btn.amber:hover{background:linear-gradient(135deg,#4f46e5,#0891b2);color:#fff;transform:translateY(-1px)}
 .btn.sm{padding:8px 14px;font-size:12.5px;border-radius:8px}
 
 /* ===== section grid ===== */
@@ -4487,9 +4487,9 @@ select{cursor:pointer}
   <div class="nav-tabs" id="nav-tabs">
     <button data-p="home" class="active"> 首页</button>
     <button data-p="search" class="">文献检索</button>
+    <button data-p="agent" class="">文献研究智能体</button>
     <button data-p="datasets">数据集收录</button>
     <button data-p="crawl" class="">数据爬取与智能分析</button>
-    <button data-p="agent" class="">文献研究智能体</button>
     <button data-p="library">⭐ 我的收藏</button>
     <button data-p="about">ℹ 关于</button>
   </div>
@@ -4502,12 +4502,12 @@ select{cursor:pointer}
 <section id="p-home" class="page active">
   <div class="hero" style="text-align:center">
     <h1 style="text-align:center">心理健康相关科研平台</h1>
-    <p class="sub" style="margin-left:auto;margin-right:auto">文献检索 · 数据集收录 · 数据爬取与智能分析 · 文献研究智能体，一站式服务心理健康科研。</p>
+    <p class="sub" style="margin-left:auto;margin-right:auto">文献检索 · 文献研究智能体 · 数据集收录 · 数据爬取与智能分析，一站式服务心理健康科研。</p>
     <div class="actions" style="justify-content:center">
       <button class="btn primary" onclick="go('search')">文献检索</button>
+      <button class="btn violet" onclick="go('agent')">文献研究智能体</button>
       <button class="btn teal" onclick="go('datasets')">数据集收录</button>
       <button class="btn amber" onclick="go('crawl')">数据爬取与智能分析</button>
-      <button class="btn violet" onclick="go('agent')">文献研究智能体</button>
     </div>
   </div>
 
