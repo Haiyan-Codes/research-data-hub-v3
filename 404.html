@@ -5142,23 +5142,38 @@ else:
     </div>
     <p style="color:var(--muted);font-size:12px;margin:6px 0 0">Key 仅写入本地脚本。不填则跳过 AI 摘要，仅做关键词自动分类。Key 获取：<a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">DeepSeek 开放平台</a> · <a href="#deepseek-guide" onclick="document.getElementById('deepseek-guide').open=true" style="color:var(--accent2)">📖 申请与购买指南</a></p>
 
-    <h4 style="margin:14px 0 6px;color:var(--warn)">🤖 LAMBDA 智能分析（可选，需本地部署后端）</h4>
+    <h4 style="margin:14px 0 6px;color:var(--warn)">🤖 LAMBDA 智能分析（云端部署，免本地安装）</h4>
     <div class="toolbar" style="flex-wrap:wrap;gap:10px">
-      <label class="src-chk"><input type="checkbox" id="c-use-lambda"> 启用 LAMBDA 自动数据分析</label>
+      <label class="src-chk"><input type="checkbox" id="c-use-lambda" checked> 启用 LAMBDA 自动数据分析</label>
+      <span style="color:var(--muted);font-size:12px;margin-left:auto">今日剩余配额：<b id="lambda-quota-left" style="color:var(--accent2)">3</b> / 3 次</span>
     </div>
     <div class="toolbar" style="flex-wrap:wrap;gap:10px;margin-top:8px">
       <span style="color:var(--ink2)">后端地址</span>
-      <input class="input" id="c-lambda-url" value="http://localhost:8000" style="max-width:220px" placeholder="LAMBDA 后端 URL">
+      <input class="input" id="c-lambda-url" value="https://modelscope.cn/studios/Oceanmota1/lambda-backend" style="max-width:280px" placeholder="LAMBDA 云端 URL">
       <span style="color:var(--ink2)">模型</span>
       <input class="input" id="c-lambda-model" value="deepseek-chat" style="max-width:160px" placeholder="deepseek-chat">
       <span style="color:var(--ink2)">分析思路</span>
       <input class="input" id="c-lambda-ideas" type="number" value="5" min="1" max="10" style="width:70px">
       <span style="color:var(--ink2)">条</span>
     </div>
+    <details style="margin-top:10px">
+      <summary style="cursor:pointer;color:var(--ink2);font-size:12px;padding:4px 0">🔓 自填 DeepSeek Key 解锁无限调用（可选）</summary>
+      <div style="margin-top:8px;padding:10px;background:var(--bg-elev);border-radius:6px">
+        <div class="toolbar" style="flex-wrap:wrap;gap:10px">
+          <input class="input" id="c-user-deepseek-key" placeholder="sk-... 你的 DeepSeek API Key" style="flex:1;min-width:200px;font-size:12px">
+          <button class="btn" style="padding:6px 14px;font-size:12px" onclick="verifyUserDeepseekKey()">验证并解锁</button>
+        </div>
+        <p style="color:var(--muted);font-size:11px;margin:6px 0 0">
+          填入自己的 DeepSeek Key 后调用次数不受每日配额限制（自费，约 ¥0.01/次）。
+          Key 仅保存在浏览器 localStorage，不发送到本平台服务器。
+          <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">获取 DeepSeek Key →</a>
+        </p>
+        <div id="lambda-key-status" style="margin-top:6px;font-size:12px;min-height:16px"></div>
+      </div>
+    </details>
     <p style="color:var(--muted);font-size:12px;margin:6px 0 0">
-      LAMBDA 是开源数据分析智能体，需在本地部署后端后使用。分析思路由 DeepSeek 基于爬取内容自动生成，逐条交由 LAMBDA 分析。
-      <a href="#lambda-deploy" onclick="document.getElementById('lambda-deploy').open=true" style="color:var(--accent2)">📖 查看部署指南</a>
-      · <a href="#deepseek-guide" onclick="document.getElementById('deepseek-guide').open=true" style="color:var(--accent2)">🔑 申请 DeepSeek Key</a>
+      LAMBDA 已云端部署，无需本地安装。分析思路由 DeepSeek 基于爬取内容自动生成，逐条交由 LAMBDA 在云端沙盒中执行 Python 代码并产出图表。
+      <a href="#lambda-deploy" onclick="document.getElementById('lambda-deploy').open=true" style="color:var(--accent2)">📖 部署说明</a>
     </p>
   </div>
 
@@ -5334,48 +5349,44 @@ else:
 
   <!-- LAMBDA 部署指南 -->
   <details class="about-card" style="margin-top:18px" id="lambda-deploy">
-    <summary style="cursor:pointer;font-weight:600;color:var(--warn)">🤖 LAMBDA 数据分析智能体部署指南（点击展开）</summary>
+    <summary style="cursor:pointer;font-weight:600;color:var(--warn)">🤖 LAMBDA 云端部署说明（点击展开）</summary>
     <div style="margin-top:12px;color:var(--ink2);line-height:1.8;font-size:13px">
       <p><b>什么是 LAMBDA？</b><br>
       LAMBDA 是香港理工大学开源的零代码数据分析智能体（JASA 2026 论文）。上传数据 + 自然语言提问，即可自动生成代码、运行分析、产出图表和报告。<br>
       开源地址：<a href="https://github.com/AMA-CMFAI/LAMBDA" target="_blank" style="color:var(--accent2)">github.com/AMA-CMFAI/LAMBDA</a></p>
 
-      <p style="color:var(--warn)"><b>⚠ 为什么需要本地部署？</b><br>
-      LAMBDA 公共 Web 版（lambda.com.ai）无公开 API，且需邀请码。本地部署后可通过 API 自动调用，无次数限制，数据不外流。</p>
+      <p style="color:#22c55e"><b>✅ 已云端部署，无需本地安装</b><br>
+      本平台已将 LAMBDA 后端部署在 ModelScope 阿里达摩院创空间，用户无需本地安装 Python 环境、无需克隆仓库、无需配置 .env，直接调用云端 API 即可。</p>
+
+      <p><b>📡 云端地址</b><br>
+      <code>https://modelscope.cn/studios/Oceanmota1/lambda-backend</code><br>
+      健康检查：<code>/api/v1/health</code>（浏览器访问返回 <code>{"status":"healthy"}</code> 即正常）</p>
 
       <hr style="border-color:var(--line);margin:14px 0">
 
-      <p><b>第 1 步：下载部署脚本</b></p>
-      <p>下载 <code style="color:var(--accent2)">setup_lambda.bat</code> 和 <code style="color:var(--accent2)">lambda_connector.py</code>，放到爬虫脚本同一目录。</p>
-      <p>👉 <button class="btn" style="padding:6px 16px;font-size:13px" onclick="downloadLambdaFiles()">下载 setup_lambda.bat + lambda_connector.py</button></p>
-
-      <p><b>第 2 步：一键部署 LAMBDA 后端</b></p>
-      <p>双击 <code>setup_lambda.bat</code>，脚本会自动完成：</p>
+      <p><b>💰 配额机制</b></p>
       <ul style="padding-left:20px">
-        <li>克隆 LAMBDA 开源代码到当前目录</li>
-        <li>安装 Python 依赖（pip install -r requirements.txt）</li>
-        <li>提示输入 DeepSeek API Key 并写入 .env 配置（<a href="#deepseek-guide" onclick="document.getElementById('deepseek-guide').open=true" style="color:var(--accent2)">如何申请 Key？</a>）</li>
-        <li>启动 LAMBDA 后端（端口 8000）</li>
+        <li><b>免费用户</b>：每日 3 次调用配额（项目所有者 Key 共用，无需注册）</li>
+        <li><b>解锁无限</b>：自填 DeepSeek API Key 验证后解除配额限制（自费，约 ¥0.01/次）</li>
+        <li>新用户在 DeepSeek 开放平台注册即送 500 万 tokens 免费额度，足够数百次分析</li>
       </ul>
-      <p>部署完成后，后端窗口不要关闭（关闭即停止服务）。</p>
 
-      <p><b>第 3 步：验证后端运行</b></p>
-      <pre style="background:var(--bg-elev);padding:10px;border-radius:6px;overflow-x:auto">浏览器打开 http://localhost:8000/api/v1/health<br>看到 {"status":"healthy"} 即部署成功</pre>
-
-      <p><b>第 4 步：日常启动</b></p>
-      <p>以后只需双击 <code>start_lambda.bat</code> 即可启动后端（无需重新部署）。</p>
+      <p><b>🔒 数据与隐私</b><br>
+      LAMBDA 云端沙盒在容器内执行 LLM 生成的 Python 代码。每次分析的数据传输路径：<br>
+      爬虫数据 → ModelScope 容器 → DeepSeek LLM 生成代码 → ModelScope 容器执行 → 返回分析结果<br>
+      <span style="color:var(--muted);font-size:12px">注：ModelScope 免费版存储为临时性，重启后上传文件与对话记录会丢失（适合一次性分析，不适合长期存档）。</span></p>
 
       <hr style="border-color:var(--line);margin:14px 0">
 
       <p><b>❓ 常见问题</b></p>
-      <p><b>Q1：提示缺少 Python 或 Git？</b><br>
-      需先安装 Python 3.11+ 和 Git。Python 下载：<a href="https://www.python.org/downloads/" target="_blank" style="color:var(--accent2)">python.org</a>，Git 下载：<a href="https://git-scm.com/download/win" target="_blank" style="color:var(--accent2)">git-scm.com</a></p>
-      <p><b>Q2：pip 安装依赖很慢？</b><br>
-      脚本已默认使用清华源。如仍失败，可手动执行：<code>pip install -r LAMBDA/backend/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple</code></p>
-      <p><b>Q3：DeepSeek Key 填错了想修改？</b><br>
-      编辑 <code>LAMBDA/backend/.env</code> 文件，修改 <code>OPENAI_API_KEY</code> 后重启后端即可。</p>
-      <p><b>Q4：后端启动失败？</b><br>
-      检查端口 8000 是否被占用；检查 .env 中 OPENAI_API_KEY 是否正确；查看后端窗口的报错信息。</p>
+      <p><b>Q1：配额用完了怎么办？</b><br>
+      两种选择：① 等次日自动重置（每 24 小时刷新）；② 在 LAMBDA 配置区点「🔓 自填 DeepSeek Key 解锁无限调用」，填入自己的 Key 即可解除限制。</p>
+      <p><b>Q2：自填 Key 后会泄露吗？</b><br>
+      Key 仅保存在浏览器 localStorage，不会发送到本平台服务器。前端通过 DeepSeek API 验证 Key 有效性，验证通过后仅设置本地标记位解锁配额。</p>
+      <p><b>Q3：LAMBDA 云端响应慢？</b><br>
+      ModelScope 免费版 48 小时无访问后会休眠，首次唤醒约 30 秒。如长期不响应，请联系项目所有者重启创空间。</p>
+      <p><b>Q4：想本地部署 LAMBDA？</b><br>
+      仍支持本地部署，详见 LAMBDA 开源仓库：<a href="https://github.com/AMA-CMFAI/LAMBDA" target="_blank" style="color:var(--accent2)">github.com/AMA-CMFAI/LAMBDA</a>。本地部署后改 LAMBDA 后端地址为 <code>http://localhost:8000</code> 即可。</p>
     </div>
   </details>
 
@@ -16384,9 +16395,69 @@ function generateCrawlerScript(){
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 
-  var lambdaNote = useLambda ? '<br><span style="color:var(--warn)">⚠ 已启用 LAMBDA 分析，请确保后端已启动（运行 start_lambda.bat），且 lambda_connector.py 与爬虫脚本同目录</span>' : '';
+  var lambdaNote = useLambda ? '<br><span style="color:var(--accent2)">🤖 已启用 LAMBDA 云端分析：脚本会自动调用云端 LAMBDA 后端，无需本地部署。今日剩余配额：<b>' + getLambdaQuotaLeft() + '</b> 次</span>' : '';
   msg.innerHTML = '✅ 脚本已生成：<b>' + filename + '</b><br>请在本地运行：<code>pip install python-docx requests beautifulsoup4</code> 然后 <code>python ' + filename + '</code><br><span style="color:var(--muted);font-size:12px">（启用微博自动登录还需：<code>pip install playwright && playwright install chromium</code>）</span>' + lambdaNote + '<br><span style="color:var(--warn)">本地未安装 Python？请展开下方「🐍 Python 安装引导」按步骤操作。</span>';
 }
+
+// ============ LAMBDA 配额管理 + 用户 Key 解锁 ============
+var LAMBDA_DAILY_LIMIT = 3;  // 默认每日免费配额（项目所有者 Key 共用）
+var LAMBDA_USER_KEY_FLAG = 'lambda_user_unlocked';
+var LAMBDA_QUOTA_KEY = 'lambda_quota_' + new Date().toISOString().slice(0,10);
+
+function getLambdaQuotaLeft(){
+  if (localStorage.getItem(LAMBDA_USER_KEY_FLAG) === '1') return '∞';
+  var used = parseInt(localStorage.getItem(LAMBDA_QUOTA_KEY) || '0', 10);
+  var left = Math.max(0, LAMBDA_DAILY_LIMIT - used);
+  return left;
+}
+
+function bumpLambdaQuota(){
+  if (localStorage.getItem(LAMBDA_USER_KEY_FLAG) === '1') return true;
+  var used = parseInt(localStorage.getItem(LAMBDA_QUOTA_KEY) || '0', 10);
+  if (used >= LAMBDA_DAILY_LIMIT) return false;
+  localStorage.setItem(LAMBDA_QUOTA_KEY, String(used + 1));
+  return true;
+}
+
+function refreshLambdaQuotaDisplay(){
+  var el = document.getElementById('lambda-quota-left');
+  if (el) el.textContent = getLambdaQuotaLeft();
+}
+
+// 验证用户填写的 DeepSeek Key，验证通过后解锁无限调用
+async function verifyUserDeepseekKey(){
+  var keyInput = document.getElementById('c-user-deepseek-key');
+  var statusEl = document.getElementById('lambda-key-status');
+  var key = keyInput.value.trim();
+  if (!key || !key.startsWith('sk-')) {
+    statusEl.innerHTML = '<span style="color:var(--warn)">❌ Key 格式不正确，应以 sk- 开头</span>';
+    return;
+  }
+  statusEl.innerHTML = '<span style="color:var(--muted)">⏳ 正在验证 Key...</span>';
+  try {
+    var resp = await fetch('https://api.deepseek.com/v1/models', {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + key }
+    });
+    if (resp.ok) {
+      localStorage.setItem(LAMBDA_USER_KEY_FLAG, '1');
+      localStorage.setItem('lambda_user_key', key);
+      statusEl.innerHTML = '<span style="color:#22c55e">✅ Key 验证成功，已解锁无限调用</span>';
+      refreshLambdaQuotaDisplay();
+    } else if (resp.status === 401) {
+      statusEl.innerHTML = '<span style="color:var(--warn)">❌ Key 无效或已过期，请检查</span>';
+    } else {
+      statusEl.innerHTML = '<span style="color:var(--warn)">⚠ 验证服务返回 ' + resp.status + '，请稍后重试</span>';
+    }
+  } catch (e) {
+    statusEl.innerHTML = '<span style="color:var(--warn)">⚠ 网络异常：' + e.message + '</span>';
+  }
+}
+
+// 页面加载时刷新配额显示
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(refreshLambdaQuotaDisplay, 200);
+});
 
 // 下载 LAMBDA 部署相关文件
 function downloadLambdaFiles(){
