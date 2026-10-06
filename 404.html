@@ -13904,28 +13904,72 @@ function newsReset(){newsPause();newsStart();}
   /* ======== 核心：第 1 轮 → 澄清主题 ======== */
   async function stRound1Clarify(userText){
     setBusy(true);
-    // 先输出系统开场
-    if(state.chat.length===0){
-      stMsg('sys','👋 你好！我是你的「STORM 式研究助手」。第 1 轮我会帮你把主题澄清为可以做综述的问题。先把我当作你同行，用一段话把你目前想研究的主题告诉我：人群、核心变量、是否有初步想法的干预方式、期望覆盖的年限或地域。\n\n例如：\n> 我想研究中国大学生群体的社交媒体使用与睡眠质量之间的关系，关注调节变量（例如孤独感、学业压力），语言限定中英文，近 10 年。');
-    }
+    // 显示用户输入的消息气泡
+    stMsg('user', userText, {round:1});
     try{
       const r = await STORM.clarify(userText);
       state.topic = state.topic || userText;   // 保存用户原始输入（检索词最可靠来源）
       state.topicSummary = r.topic_summary || state.topicSummary;
       stMsg('assistant', r.reply, {round:1});
-      // 追问按钮
+      // 解析出澄清问题，生成可编辑交互面板
+      const clarifyQ = parseClarifyQuestions(r.reply);
       setTimeout(()=>{
         if(state.round===1){
-          const host = $('st-actions');
-          const b = el('button','btn sm primary');
-          b.innerHTML = '✔ 主题已澄清 · 进入第 2 轮生成核心问题';
-          b.onclick = stReadyRound2;
-          host.appendChild(b);
+          stRenderClarifyPanel(clarifyQ);
         }
       },200);
     }catch(e){
       stMsg('err','第 1 轮澄清失败：'+e.message);
     }finally{ setBusy(false); }
+  }
+
+  /* 解析 LLM 返回的澄清问题（编号列表） */
+  function parseClarifyQuestions(reply){
+    const qs = [];
+    if(!reply) return qs;
+    const lines = reply.split(/\n/).map(s=>s.trim()).filter(Boolean);
+    for(const l of lines){
+      const m = l.match(/^\s*(?:\d+[\.\)、]|[（(]\d+[)）])\s*(.+)$/);
+      if(m) qs.push(m[1]);
+    }
+    return qs;
+  }
+
+  /* 渲染澄清问题交互面板：可编辑问题 + 可填写答案 */
+  function stRenderClarifyPanel(questions){
+    const host = $('st-actions'); if(!host) return;
+    host.innerHTML = '';
+    const card = el('div','st-clarify-panel');
+    card.style.cssText = 'margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--bg-card)';
+    let inner = '<div style="font-size:13px;font-weight:600;margin-bottom:10px">📝 请确认/修改澄清问题，并简要回答（选填）：</div>';
+    (questions.length ? questions : ['请补充你想澄清的问题']).forEach((q,i)=>{
+      inner += `<div style="margin-bottom:12px">
+        <label style="font-size:12px;color:var(--muted)">问题 ${i+1}（可编辑）</label>
+        <textarea class="st-clarify-q" rows="2" style="width:100%;margin-top:4px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;resize:vertical">${q}</textarea>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-top:6px">你的回答（选填）</label>
+        <input class="st-clarify-a" type="text" placeholder="简要回答，或留空跳过…" style="width:100%;margin-top:4px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+      </div>`;
+    });
+    inner += `<div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn sm primary" id="st-clarify-confirm">✔ 确认并生成核心问题</button>
+      <button class="btn sm" id="st-clarify-reset">🔄 重新生成澄清问题</button>
+      <button class="btn sm" id="st-clarify-skip">⏭ 跳过，直接生成核心问题</button>
+    </div>`;
+    card.innerHTML = inner;
+    host.appendChild(card);
+    $('st-clarify-confirm').onclick = ()=>{
+      const qs = [...document.querySelectorAll('.st-clarify-q')].map(e=>e.value.trim()).filter(Boolean);
+      const ans = [...document.querySelectorAll('.st-clarify-a')].map(e=>e.value.trim());
+      // 把用户编辑后的问题和答案追加到对话历史，供后续轮次使用
+      if(qs.length){
+        const combined = qs.map((q,i)=>`Q${i+1}: ${q}${ans[i]?`\nA${i+1}: ${ans[i]}`:''}`).join('\n\n');
+        stMsg('user','【澄清问题与回答】\n'+combined,{round:1});
+      }
+      host.innerHTML='';
+      stReadyRound2();
+    };
+    $('st-clarify-reset').onclick = ()=>{ host.innerHTML=''; stRound1Clarify(state.topic||''); };
+    $('st-clarify-skip').onclick = ()=>{ host.innerHTML=''; stReadyRound2(); };
   }
 
   /* ======== 第 2 轮：生成问题清单 ======== */
@@ -14288,6 +14332,10 @@ function newsReset(){newsPause();newsStart();}
     },800);
     setInterval(saveState, 2000);
     stRenderAll();
+    // 首次进入且对话为空时显示问候语
+    if(!state.chat.length){
+      stMsg('sys','👋 你好！我是你的「STORM 式研究助手」。第 1 轮我会帮你把主题澄清为可以做综述的问题。先把我当作你同行，用一段话把你目前想研究的主题告诉我：人群、核心变量、是否有初步想法的干预方式、期望覆盖的年限或地域。\n\n例如：\n> 我想研究中国大学生群体的社交媒体使用与睡眠质量之间的关系，关注调节变量（例如孤独感、学业压力），语言限定中英文，近 10 年。');
+    }
   };
 
 })();/* /STORM IIFE */
