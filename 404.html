@@ -4511,33 +4511,42 @@ select{cursor:pointer}
     </div>
   </div>
 
-  <!-- 三大模块并列展示 -->
-  <div id="home-modules" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px;margin-bottom:20px">
-    <!-- 模块1：公开数据集 -->
-    <div style="position:relative;border-radius:14px;overflow:hidden;height:220px;box-shadow:0 4px 24px rgba(0,0,0,.3);background:linear-gradient(135deg,#1e3a5f,#0f172a)">
-      <img src="assets/news-open-data.jpg" alt="公开数据集" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
+  <!-- 四大模块并列展示 -->
+  <div id="home-modules" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:24px;margin-bottom:20px">
+    <!-- 模块1：文献检索 -->
+    <div style="position:relative;border-radius:14px;overflow:hidden;height:220px;box-shadow:0 4px 24px rgba(0,0,0,.3);background:linear-gradient(135deg,#1e3a5f,#0f172a);cursor:pointer" onclick="go('search')">
+      <img src="assets/news-open-data.jpg" alt="文献检索" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
       <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,15,19,.2) 0%,rgba(15,15,19,.85) 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:18px 20px">
-        <span style="display:inline-block;background:rgba(6,182,212,.9);color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;width:fit-content;margin-bottom:8px">公开数据集</span>
-        <h3 style="font-size:16px;font-weight:700;color:#fff;margin:0 0 5px;line-height:1.3">精选心理健康开放数据集</h3>
-        <p style="font-size:12px;color:rgba(255,255,255,.8);margin:0;line-height:1.5">覆盖 WHO Atlas、GBD、WMH、UK Biobank 等权威数据源，支持关键词检索。</p>
+        <span style="display:inline-block;background:rgba(59,130,246,.9);color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;width:fit-content;margin-bottom:8px">文献检索</span>
+        <h3 style="font-size:16px;font-weight:700;color:#fff;margin:0 0 5px;line-height:1.3">多源学术文献检索</h3>
+        <p style="font-size:12px;color:rgba(255,255,255,.8);margin:0;line-height:1.5">PubMed · Crossref · S2 · OpenAlex · Europe PMC 五源联动检索。</p>
       </div>
     </div>
-    <!-- 模块2：私有数据集 -->
-    <div style="position:relative;border-radius:14px;overflow:hidden;height:220px;box-shadow:0 4px 24px rgba(0,0,0,.3);background:linear-gradient(135deg,#064e3b,#0f172a)">
-      <img src="assets/news-global-data.jpg" alt="私有数据集" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
-      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,15,19,.2) 0%,rgba(15,15,19,.85) 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:18px 20px">
-        <span style="display:inline-block;background:rgba(16,185,129,.9);color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;width:fit-content;margin-bottom:8px">私有数据集</span>
-        <h3 style="font-size:16px;font-weight:700;color:#fff;margin:0 0 5px;line-height:1.3">卫生健康数据智能库</h3>
-        <p style="font-size:12px;color:rgba(255,255,255,.8);margin:0;line-height:1.5">含 4 大类统计年鉴（2003—2023，7518 张表），百度网盘整包下载。</p>
-      </div>
-    </div>
-    <!-- 模块3：研究智能体 -->
-    <div style="position:relative;border-radius:14px;overflow:hidden;height:220px;box-shadow:0 4px 24px rgba(0,0,0,.3);background:linear-gradient(135deg,#4c1d95,#0f172a)">
+    <!-- 模块2：文献研究智能体 -->
+    <div style="position:relative;border-radius:14px;overflow:hidden;height:220px;box-shadow:0 4px 24px rgba(0,0,0,.3);background:linear-gradient(135deg,#4c1d95,#0f172a);cursor:pointer" onclick="go('agent')">
       <img src="assets/news-ai-review.jpg" alt="文献研究智能体" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
       <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,15,19,.2) 0%,rgba(15,15,19,.85) 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:18px 20px">
         <span style="display:inline-block;background:rgba(139,92,246,.9);color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;width:fit-content;margin-bottom:8px">文献研究智能体</span>
         <h3 style="font-size:16px;font-weight:700;color:#fff;margin:0 0 5px;line-height:1.3">STORM 系统综述生成</h3>
         <p style="font-size:12px;color:rgba(255,255,255,.8);margin:0;line-height:1.5">多轮对话 + 真实文献检索，Qwen2.5-32B 生成 8 章中文综述。</p>
+      </div>
+    </div>
+    <!-- 模块3：数据集收录 -->
+    <div style="position:relative;border-radius:14px;overflow:hidden;height:220px;box-shadow:0 4px 24px rgba(0,0,0,.3);background:linear-gradient(135deg,#064e3b,#0f172a);cursor:pointer" onclick="go('datasets')">
+      <img src="assets/news-global-data.jpg" alt="数据集收录" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,15,19,.2) 0%,rgba(15,15,19,.85) 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:18px 20px">
+        <span style="display:inline-block;background:rgba(16,185,129,.9);color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;width:fit-content;margin-bottom:8px">数据集收录</span>
+        <h3 style="font-size:16px;font-weight:700;color:#fff;margin:0 0 5px;line-height:1.3">心理健康数据集</h3>
+        <p style="font-size:12px;color:rgba(255,255,255,.8);margin:0;line-height:1.5">WHO Atlas · GBD · WMH · 统计年鉴，公开 + 私有数据一键获取。</p>
+      </div>
+    </div>
+    <!-- 模块4：数据爬取与智能分析 -->
+    <div style="position:relative;border-radius:14px;overflow:hidden;height:220px;box-shadow:0 4px 24px rgba(0,0,0,.3);background:linear-gradient(135deg,#78350f,#0f172a);cursor:pointer" onclick="go('crawl')">
+      <img src="assets/news-ai-review.jpg" alt="数据爬取与智能分析" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,15,19,.2) 0%,rgba(15,15,19,.85) 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:18px 20px">
+        <span style="display:inline-block;background:rgba(245,158,11,.9);color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;width:fit-content;margin-bottom:8px">数据爬取与智能分析</span>
+        <h3 style="font-size:16px;font-weight:700;color:#fff;margin:0 0 5px;line-height:1.3">关键词驱动爬取分析</h3>
+        <p style="font-size:12px;color:rgba(255,255,255,.8);margin:0;line-height:1.5">批量爬取论文 · 方法学抽取 · LLM 综述与数据洞见生成。</p>
       </div>
     </div>
   </div>
@@ -4878,6 +4887,9 @@ else:
         <div class="st-col-body" id="st-chat"><!-- 动态消息流 --><div class="st-empty"><span class="st-emoji">🧑‍🔬</span>请先在上方设置你的 Cloudflare Worker 地址并保存，然后输入你想研究的主题（比如「青少年非自杀性自伤的心理干预」），我会先帮你澄清研究范围。</div></div>
         <div class="st-chat-footer">
           <div class="st-actions" id="st-actions"></div>
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <button class="btn sm" id="st-kw-btn" onclick="stExtractEnglishKeywords()" style="flex:1" title="将中文主题翻译为英文检索词，提升学术数据库召回率">🔤 提取英文检索词</button>
+          </div>
           <div class="st-input-wrap">
             <textarea id="st-input" rows="2" placeholder="第 1 轮：输入你的研究主题 / 第 2 轮：补充问题 / 第 3 轮：追问 / 第 5 轮：精修指令..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();stSend()}"></textarea>
             <button class="btn primary" id="st-send" onclick="stSend()">发送 ▶</button>
@@ -13303,6 +13315,7 @@ function newsReset(){newsPause();newsStart();}
     topic:'',                // 用户第 1 轮原始输入（最干净的检索词来源）
     topicSummary:'',         // 第 1 轮澄清后生成的 concise 主题摘要（可能含 LLM 乱码）
     searchQueries:[],        // 第 2 轮后确定的检索关键词数组
+    englishKeywords:[],      // 中文主题翻译后的英文检索词（优先用于学术库检索）
     refineFocuses:{
       ch3:'',ch4:'',ch5:'',ch6:'',ch7:'',ch8:''
     },
@@ -13491,6 +13504,7 @@ function newsReset(){newsPause();newsStart();}
       const resp = await stFetch('/chat',{
         phase:'clarify', topic, purpose,
         clarifyAnswers: historyClarify(),
+        englishKeywords: state.englishKeywords,
         messages: state.chat.map(m=>({role:m.role==='user'?'user':'assistant',content:m.text})).concat([{role:'user',content:userText}])
       },{timeoutMs:120000});
       // topic_summary 取用户原始输入（LLM 澄清回复是问题，不是主题摘要）
@@ -13509,6 +13523,7 @@ function newsReset(){newsPause();newsStart();}
         phase:'questions',
         topic, purpose: historyPurpose(),
         clarifyAnswers: historyClarify(),
+        englishKeywords: state.englishKeywords,
         count: 8
       },{timeoutMs:120000});
       const reply = (resp&&resp.reply) || '';
@@ -13548,6 +13563,7 @@ function newsReset(){newsPause();newsStart();}
         topic: state.topic || state.topicSummary,
         purpose: historyPurpose(),
         clarifyAnswers: historyClarify(),
+        englishKeywords: state.englishKeywords,
         subquestion: q,
         papers: papers.slice(0,20),
         messages: (history||[]).slice(-8).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))
@@ -13580,6 +13596,7 @@ function newsReset(){newsPause();newsStart();}
         purpose: purpose + (extras.length ? '\n\n'+extras.join('\n') : ''),
         clarifyAnswers,
         confirmedQuestions: questions,
+        englishKeywords: state.englishKeywords,
         papers: papers,
         planRecommendations: extras.length?'精修要求：'+extras.join('；'):''
       },{timeoutMs:600000}); // 8 章串行 LLM 调用，允许长超时
@@ -14056,10 +14073,15 @@ function newsReset(){newsPause();newsStart();}
         .map(s=>s.trim())
         .filter(s=>s.length>=2 && s.length<=30 && !/^\d+$/.test(s) && !/^D+$/i.test(s));
       const uniqueTokens = [...new Set(topicTokens)];
-      // 主检索词 = 完整主题；补充检索词 = 主题中的关键概念片段（最多 4 个）
-      const queries = [cleanTopic, ...uniqueTokens.slice(0, 4)].filter(q=>q && q.length>=2);
-      // 用于后端相关性打分的核心概念
-      const keyConcepts = uniqueTokens.slice(0, 5);
+      // 检索词构造：优先使用英文检索词（学术库以英文为主），否则用中文主题分词
+      let queries, keyConcepts;
+      if(state.englishKeywords && state.englishKeywords.length){
+        queries = state.englishKeywords.slice(0, 6);
+        keyConcepts = state.englishKeywords.slice(0, 6);
+      } else {
+        queries = [cleanTopic, ...uniqueTokens.slice(0, 4)].filter(q=>q && q.length>=2);
+        keyConcepts = uniqueTokens.slice(0, 5);
+      }
       let idx = 0;
       for(const q of queries.slice(0,5)){
         stMsg('sys',`🔍 检索 ${idx+1}/${Math.min(queries.length,5)}："${q.slice(0,60)}"`);
@@ -14245,6 +14267,69 @@ function newsReset(){newsPause();newsStart();}
       toDoIds.forEach(id=>{ if(state.chapters[id]) state.chapters[id].status = 'err'; });
       stMsg('err','精修失败：'+e.message);
     }finally{ setBusy(false); stRenderReview(); }
+  }
+
+  /* ======== 提取英文检索词（中文主题 → 英文关键词） ======== */
+  window.stExtractEnglishKeywords = async function(){
+    const txt = ($('st-input').value||'').trim();
+    const topic = txt || state.topic || state.topicSummary;
+    if(!topic){ alert('请先在输入框中输入研究主题'); return; }
+
+    const btn = $('st-kw-btn');
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ 提取中…';
+
+    try {
+      const resp = await stFetch('/extract-keywords', { topic }, { timeoutMs: 60000 });
+      const kws = (resp && resp.keywords) || [];
+      if(!kws.length){
+        alert('未能提取到英文检索词，请重试或手动输入英文关键词。');
+        return;
+      }
+
+      state.englishKeywords = kws;
+      // 弹窗让用户编辑确认
+      const edited = await stKeywordEditor(topic, kws);
+      state.englishKeywords = edited;
+
+      stMsg('sys',
+        `🔤 已提取 ${edited.length} 个英文检索词，后续文献检索将优先使用英文关键词（学术数据库以英文为主）：<br>` +
+        edited.map(k=>`<span style="display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px;margin:2px;font-size:12px">${esc(k)}</span>`).join(' '),
+        { round: state.round }
+      );
+    } catch(e){
+      stMsg('err','提取英文检索词失败：'+e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  };
+
+  // 英文检索词编辑弹窗
+  function stKeywordEditor(topic, kws){
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+      const box = document.createElement('div');
+      box.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto';
+      box.innerHTML = `
+        <h3 style="margin:0 0 8px">🔤 英文检索词</h3>
+        <p style="margin:0 0 12px;font-size:13px;color:var(--muted)">主题「${esc(topic)}」已翻译为以下英文检索词，可增删修改，每行一个：</p>
+        <textarea id="st-kw-ta" rows="12" style="width:100%;box-sizing:border-box;background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:monospace;font-size:13px">${kws.join('\n')}</textarea>
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+          <button class="btn" id="st-kw-cancel">取消</button>
+          <button class="btn primary" id="st-kw-ok">确认使用</button>
+        </div>`;
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      box.querySelector('#st-kw-cancel').onclick = () => { overlay.remove(); resolve(kws); };
+      box.querySelector('#st-kw-ok').onclick = () => {
+        const lines = box.querySelector('#st-kw-ta').value.split('\n').map(s=>s.trim()).filter(s=>s.length>2);
+        overlay.remove();
+        resolve([...new Set(lines)]);
+      };
+    });
   }
 
   /* ======== 对外 send ======== */
