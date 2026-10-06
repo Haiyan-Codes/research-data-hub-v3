@@ -527,6 +527,7 @@ select{cursor:pointer}
 .st-refine-row span{flex:1;font-weight:600;color:var(--ink1)}
 .st-refine-row input{padding:4px 8px;font-size:12px;flex:2;border:1px solid var(--line);border-radius:4px;outline:none}
 .st-refine-row input:focus{border-color:var(--accent)}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
 </style>
 <style>.trae-browser-inspect-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:999997;pointer-events:auto;background:rgba(0,0,0,0)}.trae-browser-inspect-highlight-box{position:absolute;top:0;left:0;z-index:999998;display:none}.trae-browser-inspect-highlight-tag{position:absolute;left:0px;top:0px;height:18px;padding:0 6px;box-sizing:border-box;border-radius:4px;background-color:var(--vscode-icube-colorSuccessHover, "#2FB287");color:var(--vscode-icube-colorSnow, "#fff");font-size:12px;font-weight:400;display:none;align-items:center;z-index:999999}.trae-browser-inspect-highlight-box-show{display:flex}.trae-browser-inspect-select-button.trae-browser-inspect-highlight-box-show{display:flex !important}.trae-browser-inspect-select-button{position:absolute;top:0;left:0;background-color:var(--vscode-icube--bg-bg-base-secondary, "#222427");color:var(--vscode-icube--text-text-default-active, "#F5F9FE");font-size:11px;font-weight:500;border:1px solid var(--vscode-icube--border-neutral-l1, "#E0E2F217");border-radius:6px;padding:0 8px;height:32px;display:none;align-items:center;cursor:pointer;z-index:999999;gap:4px}.trae-browser-inspect-select-button svg,.trae-browser-inspect-select-button span{z-index:1}.trae-browser-inspect-select-highlight-box{background:rgba(0,0,0,0) !important}.trae-browser-inspect-select-highlight-box .trae-browser-inspect-highlight-tag{background-color:var(--vscode-icube--status-success-active, "#1E8B56")}.trae-browser-inspect-comment-card-container{position:fixed;top:0;left:0;z-index:9999999;pointer-events:auto}.trae-browser-inspect-comment-card-container .trae-browser-inspect-comment-card{display:flex;padding-top:0px !important;align-items:center;z-index:9999999 !important;background-color:var(--vscode-icube--bg-bg-menu)}*[contenteditable]{outline:none}.trae-browser-inspect-click-effect{position:fixed;width:40px;height:40px;margin-left:-20px;margin-top:-20px;border-radius:50%;background-color:var(--vscode-icube-colorSuccessHover, #2FB287);pointer-events:none;animation:trae-browser-inspect-ripple 500ms ease-out forwards;z-index:999999}@keyframes trae-browser-inspect-ripple{0%{transform:scale(0.3);opacity:.8}100%{transform:scale(2);opacity:0}}.trae-browser-inspect-ref-box{position:absolute;border:2px solid var(--vscode-icube-colorSuccessHover, "#2FB287");pointer-events:none;z-index:999998;animation:trae-browser-inspect-fadeInOut 2s ease-in-out forwards}.trae-browser-inspect-ref-label{position:absolute;top:-14px;left:0;height:14px;padding:0 4px;box-sizing:border-box;border-radius:2px;background-color:var(--vscode-icube-colorSuccessHover, "#2FB287");color:var(--vscode-icube-colorSnow, "#fff");font-size:9px;font-weight:500;display:flex;align-items:center;white-space:nowrap;z-index:999999}@keyframes trae-browser-inspect-fadeInOut{0%{opacity:0}10%{opacity:1}90%{opacity:1}100%{opacity:0}}.trae-browser-inspect-input-highlight{position:absolute;border:2px solid var(--vscode-icube-colorSuccessHover, "#2FB287");border-radius:4px;pointer-events:none;z-index:999998;box-shadow:0 0 8px var(--vscode-icube-colorSuccessHover, "#2FB287");animation:trae-browser-inspect-input-pulse 600ms ease-out forwards}@keyframes trae-browser-inspect-input-pulse{0%{opacity:0;box-shadow:0 0 0 var(--vscode-icube-colorSuccessHover, "#2FB287")}30%{opacity:1;box-shadow:0 0 12px var(--vscode-icube-colorSuccessHover, "#2FB287")}100%{opacity:0;box-shadow:0 0 0 var(--vscode-icube-colorSuccessHover, "#2FB287")}}.trae-browser-inspect-virtual-cursor{position:fixed;width:20px;height:20px;pointer-events:none;z-index:9999999;opacity:0;transition:opacity .2s ease}.trae-browser-inspect-virtual-cursor.trae-browser-inspect-cursor-visible{opacity:1}.trae-browser-inspect-virtual-cursor.trae-browser-inspect-cursor-idle{animation:trae-browser-inspect-cursor-breathe 2s ease-in-out infinite}.trae-browser-inspect-virtual-cursor svg{width:20px;height:20px;filter:drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))}@keyframes trae-browser-inspect-cursor-breathe{0%,100%{opacity:.7}50%{opacity:1}}.trae-browser-inspect-scroll-indicator{position:fixed;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;background-color:rgba(0,0,0,.7);color:#fff;font-size:13px;font-weight:500;pointer-events:none;z-index:999999;animation:trae-browser-inspect-indicator-fade 800ms ease-out forwards;backdrop-filter:blur(4px)}.trae-browser-inspect-scroll-indicator svg{width:16px;height:16px;fill:#fff}.trae-browser-inspect-scroll-indicator.trae-scroll-up{top:12px;left:50%;transform:translateX(-50%)}.trae-browser-inspect-scroll-indicator.trae-scroll-down{bottom:12px;left:50%;transform:translateX(-50%)}.trae-browser-inspect-scroll-indicator.trae-scroll-left{left:12px;top:50%;transform:translateY(-50%)}.trae-browser-inspect-scroll-indicator.trae-scroll-right{right:12px;top:50%;transform:translateY(-50%)}@keyframes trae-browser-inspect-indicator-fade{0%{opacity:0;transform:translateX(-50%) scale(0.9)}15%{opacity:1;transform:translateX(-50%) scale(1)}85%{opacity:1}100%{opacity:0}}.trae-browser-inspect-scroll-indicator.trae-scroll-left,.trae-browser-inspect-scroll-indicator.trae-scroll-right{animation-name:trae-browser-inspect-indicator-fade-y}@keyframes trae-browser-inspect-indicator-fade-y{0%{opacity:0;transform:translateY(-50%) scale(0.9)}15%{opacity:1;transform:translateY(-50%) scale(1)}85%{opacity:1}100%{opacity:0}}.trae-browser-inspect-key-badge{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:8px;background-color:rgba(0,0,0,.8);color:#fff;font-size:18px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,monospace;pointer-events:none;z-index:999999;animation:trae-browser-inspect-key-pop 500ms ease-out forwards;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 12px rgba(0,0,0,.3);letter-spacing:1px}@keyframes trae-browser-inspect-key-pop{0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(0.9)}20%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}.trae-browser-inspect-step-badge{position:fixed;top:12px;left:12px;padding:6px 12px;border-radius:6px;background-color:var(--vscode-icube-colorSuccessHover, #2FB287);color:#fff;font-size:12px;font-weight:600;pointer-events:none;z-index:999999;animation:trae-browser-inspect-step-slide 600ms ease-out forwards;box-shadow:0 2px 8px rgba(47,178,135,.3);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.trae-browser-inspect-step-badge.trae-step-old{opacity:.4;transform:translateY(0)}@keyframes trae-browser-inspect-step-slide{0%{opacity:0;transform:translateX(-20px)}20%{opacity:1;transform:translateX(0)}100%{opacity:1;transform:translateX(0)}}.trae-browser-inspect-drag-trail{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.trae-browser-inspect-drag-trail svg{width:100%;height:100%}.trae-browser-inspect-drag-trail .trae-drag-path{fill:none;stroke:var(--vscode-icube-colorSuccessHover, #2FB287);stroke-width:2;stroke-dasharray:8 4;opacity:.6;animation:trae-browser-inspect-dash 600ms linear forwards}.trae-browser-inspect-drag-trail .trae-drag-dot{fill:var(--vscode-icube-colorSuccessHover, #2FB287);filter:drop-shadow(0 0 4px rgba(47, 178, 135, 0.6))}.trae-browser-inspect-drag-trail .trae-drag-endpoint{fill:none;stroke:var(--vscode-icube-colorSuccessHover, #2FB287);stroke-width:2;opacity:.5}@keyframes trae-browser-inspect-dash{0%{stroke-dashoffset:200}100%{stroke-dashoffset:0}}.trae-browser-inspect-drag-trail.trae-drag-fade{animation:trae-browser-inspect-trail-fade 400ms ease-out forwards}@keyframes trae-browser-inspect-trail-fade{0%{opacity:1}100%{opacity:0}}</style><script type="module">(async () => {
   try {
@@ -5145,9 +5146,8 @@ else:
     <h4 style="margin:14px 0 6px;color:var(--warn)">🤖 智能数据分析（Pyodide 浏览器内执行，免部署）</h4>
     <div class="toolbar" style="flex-wrap:wrap;gap:10px">
       <span style="color:var(--ink2)">DeepSeek Key</span>
-      <input class="input" id="c-deepseek-key" placeholder="sk-... 你的 DeepSeek API Key" style="flex:1;min-width:200px;font-size:12px" value="">
-      <button class="btn" style="padding:6px 14px;font-size:12px" onclick="verifyDeepseekKey()">验证</button>
-      <span id="pyodide-status" style="color:var(--muted);font-size:12px">Pyodide 未加载</span>
+      <input class="input" id="c-deepseek-key" placeholder="sk-... 你的 DeepSeek API Key（填完失焦自动验证）" style="flex:1;min-width:200px;font-size:12px" value="" onblur="onDeepseekKeyBlur()">
+      <button class="btn" id="verify-key-btn" style="padding:6px 14px;font-size:12px" onclick="verifyDeepseekKey()">验证</button>
     </div>
     <p style="color:var(--muted);font-size:11px;margin:6px 0 0">
       🔒 Key 仅保存在浏览器 localStorage，不发送到本平台服务器，直接调用 DeepSeek API 生成 Python 代码。
@@ -5160,15 +5160,30 @@ else:
   <div class="about-card" id="data-analysis-chat" style="margin-top:24px;border:1px solid rgba(6,182,212,.35);background:linear-gradient(135deg,rgba(6,182,212,.05),rgba(124,58,237,.05))">
     <h3 style="margin:0 0 8px;color:var(--accent2);font-size:18px">💬 智能数据分析对话</h3>
     <p style="color:var(--ink2);font-size:13px;margin:0 0 14px">
-      上传 CSV/Excel 数据 + 填 DeepSeek Key + 输入问题 → AI 自动生成 Python 代码 → Pyodide 在浏览器内执行 → 产出图表与统计结果。
-      <span style="color:var(--muted);font-size:12px">（全程在线分析，无需本地部署、无需下载脚本、数据不离开浏览器）</span>
+      上传 CSV/Excel + 输入问题 → AI 自动生成 Python 代码 → 浏览器内执行 → 产出图表与统计结果。
+      <span style="color:var(--muted);font-size:12px">（Pyodide 后台自动加载，无需手动操作）</span>
     </p>
+
+    <!-- Pyodide 自动加载进度条 -->
+    <div id="pyodide-progress" style="display:none;margin-bottom:12px;padding:10px;background:var(--bg-elev);border-radius:6px;border-left:3px solid var(--accent2)">
+      <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink2)">
+        <span id="pyodide-progress-icon" style="animation:spin 1s linear infinite;display:inline-block">⏳</span>
+        <span id="pyodide-progress-text" style="flex:1">Pyodide 准备中...</span>
+        <span id="pyodide-progress-pct" style="color:var(--accent2);font-weight:600">0%</span>
+      </div>
+      <div style="margin-top:6px;height:4px;background:var(--line);border-radius:2px;overflow:hidden">
+        <div id="pyodide-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .3s"></div>
+      </div>
+    </div>
 
     <div class="toolbar" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
       <input type="file" id="da-file-input" accept=".csv,.xlsx,.xls,.tsv" style="display:none" onchange="onDataFileChosen(this)">
       <button class="btn" onclick="document.getElementById('da-file-input').click()" style="padding:8px 16px;font-size:13px">📁 上传数据文件</button>
       <span id="da-file-name" style="color:var(--ink2);font-size:12px;padding:6px 0">未选择文件</span>
-      <button class="btn" style="padding:8px 16px;font-size:13px;margin-left:auto" onclick="loadPyodideIfNeeded()">🔌 加载 Pyodide</button>
+      <span id="pyodide-status" style="color:var(--muted);font-size:12px;margin-left:auto">
+        <span id="pyodide-status-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-right:4px"></span>
+        <span id="pyodide-status-text">Pyodide 后台加载中</span>
+      </span>
     </div>
 
     <div id="da-chat" style="background:var(--bg-elev);border-radius:8px;padding:14px;max-height:520px;overflow-y:auto;font-size:13px;min-height:200px">
@@ -16399,33 +16414,40 @@ var pyodideInstance = null;
 var dataAnalysisContext = { fileName: '', fileCols: [], fileRows: 0, dfVar: 'df' };
 var dataAnalysisMessages = []; // 多轮对话上下文
 
-// 加载 Pyodide CDN
+// 自动后台加载 Pyodide（页面加载后 3 秒开始）
+window.addEventListener('load', function(){
+  setTimeout(autoLoadPyodide, 3000);
+});
+
+async function autoLoadPyodide(){
+  if (pyodideReady || pyodideLoading) return;
+  await loadPyodideIfNeeded();
+}
+
+// 加载 Pyodide CDN（带进度反馈 + 失败重试）
 async function loadPyodideIfNeeded(){
-  if (pyodideReady) { updatePyodideStatus('✅ Pyodide 已就绪', '#22c55e'); return; }
-  if (pyodideLoading) { updatePyodideStatus('⏳ 正在加载 Pyodide...', 'var(--muted)'); return; }
+  if (pyodideReady) { setPyodideStatus('ready', '✅ Pyodide 就绪'); return; }
+  if (pyodideLoading) { setPyodideStatus('loading', '⏳ 正在加载...'); return; }
   pyodideLoading = true;
-  updatePyodideStatus('⏳ 正在下载 Pyodide (~10MB, 首次较慢)...', 'var(--warn)');
+  showPyodideProgress(true);
   try {
+    setPyodideStatus('loading', '⏳ 下载 Pyodide 核心...');
+    setPyodideProgress(5, '下载 Pyodide 核心 (~5MB)');
     if (!window.loadPyodide) {
-      await new Promise((resolve, reject) => {
-        var s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
-        s.onload = resolve;
-        s.onerror = () => reject(new Error('Pyodide CDN 加载失败'));
-        document.head.appendChild(s);
-      });
+      await loadScriptWithTimeout('https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js', 30000);
     }
+    setPyodideProgress(20, '初始化 Python 运行时');
     pyodideInstance = await window.loadPyodide({
       indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/'
     });
-    updatePyodideStatus('⏳ 加载科学计算包 pandas/numpy...', 'var(--warn)');
-    // openpyxl 不在 Pyodide 默认包列表，需用 micropip 安装
+    setPyodideProgress(40, '加载 pandas/numpy');
     await pyodideInstance.loadPackage(['pandas', 'numpy', 'matplotlib', 'scikit-learn', 'xlrd', 'micropip']);
+    setPyodideProgress(70, '加载 openpyxl');
     await pyodideInstance.runPythonAsync(`
 import micropip
 await micropip.install('openpyxl')
 `);
-    // 配置 matplotlib 在浏览器内渲染
+    setPyodideProgress(85, '配置图表渲染');
     await pyodideInstance.runPythonAsync(`
 import matplotlib
 matplotlib.use('AGG')
@@ -16439,27 +16461,66 @@ def _render_fig():
     plt.close('all')
     return img_b64
 `);
+    setPyodideProgress(100, '就绪');
     pyodideReady = true;
     pyodideLoading = false;
-    updatePyodideStatus('✅ Pyodide 就绪 (pandas/numpy/matplotlib/sklearn/openpyxl)', '#22c55e');
+    setPyodideStatus('ready', '✅ Pyodide 就绪');
+    setTimeout(function(){ showPyodideProgress(false); }, 1500);
   } catch (e) {
     pyodideLoading = false;
-    updatePyodideStatus('❌ Pyodide 加载失败：' + e.message, 'var(--warn)');
+    setPyodideStatus('error', '❌ ' + e.message);
+    setPyodideProgress(0, '加载失败：' + e.message + '（可重试）');
+    console.error('Pyodide load error:', e);
   }
 }
 
-function updatePyodideStatus(text, color){
-  var el = document.getElementById('pyodide-status');
-  if (el) { el.textContent = text; el.style.color = color; }
+function loadScriptWithTimeout(url, timeoutMs){
+  return new Promise((resolve, reject) => {
+    var s = document.createElement('script');
+    s.src = url;
+    var timer = setTimeout(() => reject(new Error('CDN 加载超时')), timeoutMs);
+    s.onload = () => { clearTimeout(timer); resolve(); };
+    s.onerror = () => { clearTimeout(timer); reject(new Error('CDN 加载失败')); };
+    document.head.appendChild(s);
+  });
 }
 
-// 验证 DeepSeek Key
+function showPyodideProgress(show){
+  var el = document.getElementById('pyodide-progress');
+  if (el) el.style.display = show ? 'block' : 'none';
+}
+
+function setPyodideProgress(pct, text){
+  var bar = document.getElementById('pyodide-progress-bar');
+  var txt = document.getElementById('pyodide-progress-text');
+  var pctEl = document.getElementById('pyodide-progress-pct');
+  if (bar) bar.style.width = pct + '%';
+  if (txt) txt.textContent = text;
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+function setPyodideStatus(state, text){
+  var dot = document.getElementById('pyodide-status-dot');
+  var txt = document.getElementById('pyodide-status-text');
+  if (txt) txt.textContent = text;
+  if (dot) {
+    var colors = { ready: '#22c55e', loading: '#f59e9b', error: '#ef4444' };
+    dot.style.background = colors[state] || '#9ca3af';
+  }
+}
+
+// 页面加载时启动自动加载指示
+document.addEventListener('DOMContentLoaded', function(){
+  setPyodideStatus('loading', 'Pyodide 后台加载中');
+});
+
+// 验证 DeepSeek Key（支持手动点按钮或失焦自动触发）
 async function verifyDeepseekKey(){
   var keyInput = document.getElementById('c-deepseek-key');
   var key = keyInput.value.trim();
-  if (!key || !key.startsWith('sk-')) { alert('请填写以 sk- 开头的 DeepSeek Key'); return; }
-  var btn = event.target;
-  btn.disabled = true; btn.textContent = '验证中...';
+  if (!key || !key.startsWith('sk-')) { return false; }
+  var btn = document.getElementById('verify-key-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '验证中...'; }
   try {
     var resp = await fetch('https://api.deepseek.com/v1/models', {
       method: 'GET',
@@ -16467,15 +16528,31 @@ async function verifyDeepseekKey(){
     });
     if (resp.ok) {
       localStorage.setItem('deepseek_user_key', key);
-      btn.textContent = '✅ 已验证'; btn.style.background = '#22c55e';
-      appendDaChat('✅ DeepSeek Key 验证成功，可以开始分析了', 'system');
+      if (btn) { btn.textContent = '✅ 已验证'; btn.style.background = '#22c55e'; }
+      return true;
     } else if (resp.status === 401) {
-      alert('❌ Key 无效或已过期'); btn.textContent = '验证';
+      if (btn) { btn.textContent = '❌ 无效'; btn.style.background = '#ef4444'; }
+      return false;
     } else {
-      alert('⚠ 验证服务返回 ' + resp.status); btn.textContent = '验证';
+      if (btn) btn.textContent = '重试';
+      return false;
     }
-  } catch (e) { alert('网络异常：' + e.message); btn.textContent = '验证'; }
-  btn.disabled = false;
+  } catch (e) {
+    if (btn) btn.textContent = '重试';
+    return false;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// 失焦自动验证 + 保存
+function onDeepseekKeyBlur(){
+  var key = (document.getElementById('c-deepseek-key').value || '').trim();
+  if (key && key.startsWith('sk-')) {
+    // 静默保存到 localStorage，不弹任何提示
+    localStorage.setItem('deepseek_user_key', key);
+    verifyDeepseekKey();
+  }
 }
 
 // 用户选择数据文件
@@ -16538,11 +16615,21 @@ async function askDataAnalysis(){
   var question = input.value.trim();
   if (!question) return;
   var key = localStorage.getItem('deepseek_user_key') || (document.getElementById('c-deepseek-key').value || '').trim();
-  if (!key) { alert('请先填写并验证 DeepSeek API Key'); return; }
-  if (!pyodideReady) { alert('请先点击「加载 Pyodide」'); return; }
-  if (!dataAnalysisContext.fileName) { alert('请先上传数据文件'); return; }
+  if (!key) { alert('请先填写 DeepSeek API Key'); return; }
+  if (!dataAnalysisContext.fileName) { alert('请先上传数据文件（CSV/Excel）'); return; }
   appendDaChat(escapeHtml(question), 'user');
   input.value = '';
+  // 如果 Pyodide 还没就绪，自动加载并提示
+  if (!pyodideReady) {
+    appendDaChat('⏳ Pyodide 还在加载，请稍候（首次约 30-60 秒）...', 'system');
+    await loadPyodideIfNeeded();
+    if (!pyodideReady) {
+      removeLastDaChat();
+      appendDaChat('❌ Pyodide 加载失败，请刷新页面重试', 'error');
+      return;
+    }
+    removeLastDaChat();
+  }
   appendDaChat('⏳ AI 思考中...', 'system');
   try {
     var sysPrompt = buildDataAnalysisSystemPrompt();
