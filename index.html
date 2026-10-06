@@ -4868,6 +4868,26 @@ else:
       <button class="btn sm teal" onclick="stSaveConfig()"> 保存到浏览器</button>
       <button class="btn sm" onclick="stPingWorker()"> 测试连通性</button>
       <span id="st-ping" style="font-size:12px;color:var(--muted)"></span>
+      <details style="margin-top:6px;width:100%">
+        <summary style="cursor:pointer;color:var(--accent2);font-size:12px;user-select:none">📖 如何获取自己的 SiliconFlow API Key？（点击展开/收起）</summary>
+        <div style="margin-top:8px;padding:12px 16px;background:rgba(124,58,237,0.08);border-left:3px solid var(--accent2);border-radius:6px;font-size:12.5px;line-height:1.7;color:var(--muted)">
+          <div style="color:var(--accent2);font-weight:600;margin-bottom:6px">SiliconFlow（硅基流动）— 国产大模型 API 平台，新用户送 ¥14 元额度</div>
+          <div style="margin:4px 0"><b style="color:var(--ink)">步骤 1：</b>访问 <a href="https://siliconflow.cn" target="_blank" style="color:var(--accent)">https://siliconflow.cn</a> → 右上角「注册」</div>
+          <div style="margin:4px 0"><b style="color:var(--ink)">步骤 2：</b>手机号/微信扫码登录（自动赠送额度，无需充值即可测试）</div>
+          <div style="margin:4px 0"><b style="color:var(--ink)">步骤 3：</b>登录后点击右上角头像 →「API 密钥」</div>
+          <div style="margin:4px 0"><b style="color:var(--ink)">步骤 4：</b>点击「新建密钥」→ 输入名称（如「研究助手」）→「提交」</div>
+          <div style="margin:4px 0"><b style="color:var(--ink)">步骤 5：</b><span style="color:#dc2626">立即复制</span>弹出的 <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;color:var(--accent)">sk-xxxxxx...</code>（仅显示一次，关闭后无法再查）</div>
+          <div style="margin:4px 0"><b style="color:var(--ink)">步骤 6：</b>粘贴到上方「Worker Key」输入框 → 点「保存到浏览器」</div>
+          <div style="margin:8px 0 4px;color:var(--accent2)"><b>✅ 好处：</b></div>
+          <div style="margin:2px 0 2px 12px">• 用自己额度调用 LLM，不占用站点免费配额</div>
+          <div style="margin:2px 0 2px 12px">• Key 仅存浏览器 localStorage，不上传服务器</div>
+          <div style="margin:2px 0 2px 12px">• 默认模型 Qwen2.5-32B-Instruct，免费额度可生成数百次综述</div>
+          <div style="margin:8px 0 4px;color:#dc2626"><b>⚠ 注意：</b></div>
+          <div style="margin:2px 0 2px 12px">• Key 以 <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">sk-</code> 开头才会被识别为「用户自带 Key」</div>
+          <div style="margin:2px 0 2px 12px">• 免费额度用完后需充值（¥10 起），价格参考：输入 ¥0.5/百万 tokens、输出 ¥0.5/百万 tokens</div>
+          <div style="margin:2px 0 2px 12px">• 充值页：<a href="https://cloud.siliconflow.cn/account/billing" target="_blank" style="color:var(--accent)">https://cloud.siliconflow.cn/account/billing</a></div>
+        </div>
+      </details>
     </div>
 
     <!-- 轮次指示器 -->
