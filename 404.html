@@ -13486,24 +13486,25 @@ function newsReset(){newsPause();newsStart();}
 
   const STORM = {
     async clarify(userText){
-      const topic = state.topicSummary || userText;
+      const topic = state.topic || state.topicSummary || userText;
       const purpose = historyPurpose();
       const resp = await stFetch('/chat',{
         phase:'clarify', topic, purpose,
         clarifyAnswers: historyClarify(),
         messages: state.chat.map(m=>({role:m.role==='user'?'user':'assistant',content:m.text})).concat([{role:'user',content:userText}])
       },{timeoutMs:120000});
-      // 顺带尝试把回复解析为 topic_summary（规则：如果回复里有 主题/研究范围/摘要 等字样取后一句，否则取回复前 120 字）
+      // topic_summary 取用户原始输入（LLM 澄清回复是问题，不是主题摘要）
       let topic_summary = state.topicSummary;
       if(!topic_summary){
-        topic_summary = (resp && resp.reply ? resp.reply.replace(/[\s\n]+/g,' ').slice(0,140) : topic) + '...';
+        topic_summary = userText || topic;
         state.topicSummary = topic_summary;
       }
       return { reply: (resp&&resp.reply) || '（无返回）', topic_summary };
     },
 
     async generateQuestions(){
-      const topic = state.topicSummary || historyPurpose();
+      // 必须用用户原始输入作为主题，不能用 LLM 澄清回复（那是问题而非主题）
+      const topic = state.topic || state.topicSummary || historyPurpose();
       const resp = await stFetch('/chat',{
         phase:'questions',
         topic, purpose: historyPurpose(),
@@ -13541,10 +13542,10 @@ function newsReset(){newsPause();newsStart();}
     },
 
     async round3Ask({questions, followup, papers, history}){
-      const q = followup || (questions && questions[0]) || state.topicSummary || '';
+      const q = followup || (questions && questions[0]) || state.topic || '';
       const resp = await stFetch('/chat',{
         phase:'dialogue',
-        topic: state.topicSummary,
+        topic: state.topic || state.topicSummary,
         purpose: historyPurpose(),
         clarifyAnswers: historyClarify(),
         subquestion: q,
@@ -13564,7 +13565,7 @@ function newsReset(){newsPause();newsStart();}
     },
 
     async synthesizeAll({questions, papers, refine_focus_by_id, existing}){
-      const topic = state.topicSummary || '';
+      const topic = state.topic || state.topicSummary || '';
       const purpose = historyPurpose();
       const clarifyAnswers = historyClarify();
       // 如果有精修要求，拼到 purpose 末尾
