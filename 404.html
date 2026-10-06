@@ -5142,38 +5142,17 @@ else:
     </div>
     <p style="color:var(--muted);font-size:12px;margin:6px 0 0">Key 仅写入本地脚本。不填则跳过 AI 摘要，仅做关键词自动分类。Key 获取：<a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">DeepSeek 开放平台</a> · <a href="#deepseek-guide" onclick="document.getElementById('deepseek-guide').open=true" style="color:var(--accent2)">📖 申请与购买指南</a></p>
 
-    <h4 style="margin:14px 0 6px;color:var(--warn)">🤖 LAMBDA 智能分析（云端部署，免本地安装）</h4>
+    <h4 style="margin:14px 0 6px;color:var(--warn)">🤖 智能数据分析（Pyodide 浏览器内执行，免部署）</h4>
     <div class="toolbar" style="flex-wrap:wrap;gap:10px">
-      <label class="src-chk"><input type="checkbox" id="c-use-lambda" checked> 启用 LAMBDA 自动数据分析</label>
-      <span style="color:var(--muted);font-size:12px;margin-left:auto">今日剩余配额：<b id="lambda-quota-left" style="color:var(--accent2)">3</b> / 3 次</span>
+      <span style="color:var(--ink2)">DeepSeek Key</span>
+      <input class="input" id="c-deepseek-key" placeholder="sk-... 你的 DeepSeek API Key" style="flex:1;min-width:200px;font-size:12px" value="">
+      <button class="btn" style="padding:6px 14px;font-size:12px" onclick="verifyDeepseekKey()">验证</button>
+      <span id="pyodide-status" style="color:var(--muted);font-size:12px">Pyodide 未加载</span>
     </div>
-    <div class="toolbar" style="flex-wrap:wrap;gap:10px;margin-top:8px">
-      <span style="color:var(--ink2)">后端地址</span>
-      <input class="input" id="c-lambda-url" value="https://www.modelscope.cn/studios/Oceanmola/lambda-backend" style="max-width:280px" placeholder="LAMBDA 云端 URL">
-      <span style="color:var(--ink2)">模型</span>
-      <input class="input" id="c-lambda-model" value="deepseek-chat" style="max-width:160px" placeholder="deepseek-chat">
-      <span style="color:var(--ink2)">分析思路</span>
-      <input class="input" id="c-lambda-ideas" type="number" value="5" min="1" max="10" style="width:70px">
-      <span style="color:var(--ink2)">条</span>
-    </div>
-    <details style="margin-top:10px">
-      <summary style="cursor:pointer;color:var(--ink2);font-size:12px;padding:4px 0">🔓 自填 DeepSeek Key 解锁无限调用（可选）</summary>
-      <div style="margin-top:8px;padding:10px;background:var(--bg-elev);border-radius:6px">
-        <div class="toolbar" style="flex-wrap:wrap;gap:10px">
-          <input class="input" id="c-user-deepseek-key" placeholder="sk-... 你的 DeepSeek API Key" style="flex:1;min-width:200px;font-size:12px">
-          <button class="btn" style="padding:6px 14px;font-size:12px" onclick="verifyUserDeepseekKey()">验证并解锁</button>
-        </div>
-        <p style="color:var(--muted);font-size:11px;margin:6px 0 0">
-          填入自己的 DeepSeek Key 后调用次数不受每日配额限制（自费，约 ¥0.01/次）。
-          Key 仅保存在浏览器 localStorage，不发送到本平台服务器。
-          <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">获取 DeepSeek Key →</a>
-        </p>
-        <div id="lambda-key-status" style="margin-top:6px;font-size:12px;min-height:16px"></div>
-      </div>
-    </details>
-    <p style="color:var(--muted);font-size:12px;margin:6px 0 0">
-      LAMBDA 已云端部署，无需本地安装。分析思路由 DeepSeek 基于爬取内容自动生成，逐条交由 LAMBDA 在云端沙盒中执行 Python 代码并产出图表。
-      <a href="#lambda-deploy" onclick="document.getElementById('lambda-deploy').open=true" style="color:var(--accent2)">📖 部署说明</a>
+    <p style="color:var(--muted);font-size:11px;margin:6px 0 0">
+      🔒 Key 仅保存在浏览器 localStorage，不发送到本平台服务器，直接调用 DeepSeek API 生成 Python 代码。
+      <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">获取 DeepSeek Key →</a>
+      · 数据分析完全在浏览器内执行（Pyodide + pandas/numpy/matplotlib/sklearn），数据不离开浏览器。
     </p>
   </div>
 
@@ -5182,6 +5161,34 @@ else:
     <button class="btn primary" onclick="generateCrawlerScript()" style="padding:14px 36px;font-size:15px">⬇ 生成爬虫脚本并下载</button>
     <div id="crawl-msg" style="margin-top:10px;color:var(--muted);font-size:13px;min-height:20px"></div>
   </div>
+
+  <!-- 智能数据分析对话区（Pyodide + DeepSeek，浏览器内执行） -->
+  <div class="about-card" id="data-analysis-chat" style="margin-top:24px">
+    <h3 style="margin:0 0 12px;color:var(--accent2)">💬 智能数据分析对话</h3>
+    <p style="color:var(--ink2);font-size:13px;margin:0 0 12px">
+      上传 CSV/Excel 数据，用自然语言提问，AI 在浏览器内直接执行 Python 代码并产出图表。
+      <span style="color:var(--muted);font-size:12px">（无需部署、数据不离开浏览器）</span>
+    </p>
+
+    <div class="toolbar" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <input type="file" id="da-file-input" accept=".csv,.xlsx,.xls,.tsv" style="display:none" onchange="onDataFileChosen(this)">
+      <button class="btn" onclick="document.getElementById('da-file-input').click()" style="padding:8px 16px;font-size:13px">📁 上传数据文件</button>
+      <span id="da-file-name" style="color:var(--ink2);font-size:12px;padding:6px 0">未选择文件</span>
+      <button class="btn" style="padding:8px 16px;font-size:13px;margin-left:auto" onclick="loadPyodideIfNeeded()">🔌 加载 Pyodide</button>
+    </div>
+
+    <div id="da-chat" style="background:var(--bg-elev);border-radius:8px;padding:14px;max-height:520px;overflow-y:auto;font-size:13px;min-height:120px">
+      <div style="color:var(--muted);text-align:center;padding:30px 10px">
+        💡 上传数据 + 输入问题（如「绘制年龄分布图」「抑郁得分按性别比较」）开始分析
+      </div>
+    </div>
+
+    <div class="toolbar" style="margin-top:10px;gap:8px">
+      <textarea id="da-input" placeholder="输入分析问题，Shift+Enter 换行，Enter 发送..." style="flex:1;min-height:44px;max-height:120px;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:13px;resize:vertical" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askDataAnalysis()}"></textarea>
+      <button class="btn primary" style="padding:10px 18px;font-size:13px" onclick="askDataAnalysis()">发送</button>
+    </div>
+  </div>
+
 
   <!-- DeepSeek API Key 申请与购买指南 -->
   <details class="about-card" style="margin-top:18px" id="deepseek-guide">
@@ -16395,69 +16402,286 @@ function generateCrawlerScript(){
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 
-  var lambdaNote = useLambda ? '<br><span style="color:var(--accent2)">🤖 已启用 LAMBDA 云端分析：脚本会自动调用云端 LAMBDA 后端，无需本地部署。今日剩余配额：<b>' + getLambdaQuotaLeft() + '</b> 次</span>' : '';
+  var lambdaNote = useLambda ? '<br><span style="color:var(--accent2)">🤖 数据分析已切换为 Pyodide 浏览器内执行模式：爬虫脚本爬取数据后，可上传至下方「智能数据分析对话」区直接对话式分析，无需本地部署 LAMBDA。</span>' : '';
   msg.innerHTML = '✅ 脚本已生成：<b>' + filename + '</b><br>请在本地运行：<code>pip install python-docx requests beautifulsoup4</code> 然后 <code>python ' + filename + '</code><br><span style="color:var(--muted);font-size:12px">（启用微博自动登录还需：<code>pip install playwright && playwright install chromium</code>）</span>' + lambdaNote + '<br><span style="color:var(--warn)">本地未安装 Python？请展开下方「🐍 Python 安装引导」按步骤操作。</span>';
 }
 
-// ============ LAMBDA 配额管理 + 用户 Key 解锁 ============
-var LAMBDA_DAILY_LIMIT = 3;  // 默认每日免费配额（项目所有者 Key 共用）
-var LAMBDA_USER_KEY_FLAG = 'lambda_user_unlocked';
-var LAMBDA_QUOTA_KEY = 'lambda_quota_' + new Date().toISOString().slice(0,10);
+// ============ 智能数据分析（Pyodide + DeepSeek） ============
+var pyodideReady = false;
+var pyodideLoading = false;
+var pyodideInstance = null;
+var dataAnalysisContext = { fileName: '', fileCols: [], fileRows: 0, dfVar: 'df' };
+var dataAnalysisMessages = []; // 多轮对话上下文
 
-function getLambdaQuotaLeft(){
-  if (localStorage.getItem(LAMBDA_USER_KEY_FLAG) === '1') return '∞';
-  var used = parseInt(localStorage.getItem(LAMBDA_QUOTA_KEY) || '0', 10);
-  var left = Math.max(0, LAMBDA_DAILY_LIMIT - used);
-  return left;
-}
-
-function bumpLambdaQuota(){
-  if (localStorage.getItem(LAMBDA_USER_KEY_FLAG) === '1') return true;
-  var used = parseInt(localStorage.getItem(LAMBDA_QUOTA_KEY) || '0', 10);
-  if (used >= LAMBDA_DAILY_LIMIT) return false;
-  localStorage.setItem(LAMBDA_QUOTA_KEY, String(used + 1));
-  return true;
-}
-
-function refreshLambdaQuotaDisplay(){
-  var el = document.getElementById('lambda-quota-left');
-  if (el) el.textContent = getLambdaQuotaLeft();
-}
-
-// 验证用户填写的 DeepSeek Key，验证通过后解锁无限调用
-async function verifyUserDeepseekKey(){
-  var keyInput = document.getElementById('c-user-deepseek-key');
-  var statusEl = document.getElementById('lambda-key-status');
-  var key = keyInput.value.trim();
-  if (!key || !key.startsWith('sk-')) {
-    statusEl.innerHTML = '<span style="color:var(--warn)">❌ Key 格式不正确，应以 sk- 开头</span>';
-    return;
+// 加载 Pyodide CDN
+async function loadPyodideIfNeeded(){
+  if (pyodideReady) { updatePyodideStatus('✅ Pyodide 已就绪', '#22c55e'); return; }
+  if (pyodideLoading) { updatePyodideStatus('⏳ 正在加载 Pyodide...', 'var(--muted)'); return; }
+  pyodideLoading = true;
+  updatePyodideStatus('⏳ 正在下载 Pyodide (~10MB, 首次较慢)...', 'var(--warn)');
+  try {
+    if (!window.loadPyodide) {
+      await new Promise((resolve, reject) => {
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Pyodide CDN 加载失败'));
+        document.head.appendChild(s);
+      });
+    }
+    pyodideInstance = await window.loadPyodide({
+      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/'
+    });
+    updatePyodideStatus('⏳ 加载科学计算包 pandas/numpy...', 'var(--warn)');
+    await pyodideInstance.loadPackage(['pandas', 'numpy', 'matplotlib', 'scikit-learn', 'openpyxl', 'xlrd']);
+    // 配置 matplotlib 在浏览器内渲染
+    await pyodideInstance.runPythonAsync(`
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import io, base64
+def _render_fig():
+    buf = io.BytesIO()
+    plt.gcf().savefig(buf, format='png', dpi=80, bbox_inches='tight')
+    buf.seek(0)
+    img_b64 = base64.b64encode(buf.read()).decode()
+    plt.close('all')
+    return img_b64
+`);
+    pyodideReady = true;
+    pyodideLoading = false;
+    updatePyodideStatus('✅ Pyodide 就绪 (pandas/numpy/matplotlib/sklearn)', '#22c55e');
+  } catch (e) {
+    pyodideLoading = false;
+    updatePyodideStatus('❌ Pyodide 加载失败：' + e.message, 'var(--warn)');
   }
-  statusEl.innerHTML = '<span style="color:var(--muted)">⏳ 正在验证 Key...</span>';
+}
+
+function updatePyodideStatus(text, color){
+  var el = document.getElementById('pyodide-status');
+  if (el) { el.textContent = text; el.style.color = color; }
+}
+
+// 验证 DeepSeek Key
+async function verifyDeepseekKey(){
+  var keyInput = document.getElementById('c-deepseek-key');
+  var key = keyInput.value.trim();
+  if (!key || !key.startsWith('sk-')) { alert('请填写以 sk- 开头的 DeepSeek Key'); return; }
+  var btn = event.target;
+  btn.disabled = true; btn.textContent = '验证中...';
   try {
     var resp = await fetch('https://api.deepseek.com/v1/models', {
       method: 'GET',
       headers: { 'Authorization': 'Bearer ' + key }
     });
     if (resp.ok) {
-      localStorage.setItem(LAMBDA_USER_KEY_FLAG, '1');
-      localStorage.setItem('lambda_user_key', key);
-      statusEl.innerHTML = '<span style="color:#22c55e">✅ Key 验证成功，已解锁无限调用</span>';
-      refreshLambdaQuotaDisplay();
+      localStorage.setItem('deepseek_user_key', key);
+      btn.textContent = '✅ 已验证'; btn.style.background = '#22c55e';
+      appendDaChat('✅ DeepSeek Key 验证成功，可以开始分析了', 'system');
     } else if (resp.status === 401) {
-      statusEl.innerHTML = '<span style="color:var(--warn)">❌ Key 无效或已过期，请检查</span>';
+      alert('❌ Key 无效或已过期'); btn.textContent = '验证';
     } else {
-      statusEl.innerHTML = '<span style="color:var(--warn)">⚠ 验证服务返回 ' + resp.status + '，请稍后重试</span>';
+      alert('⚠ 验证服务返回 ' + resp.status); btn.textContent = '验证';
     }
+  } catch (e) { alert('网络异常：' + e.message); btn.textContent = '验证'; }
+  btn.disabled = false;
+}
+
+// 用户选择数据文件
+async function onDataFileChosen(input){
+  var file = input.files[0];
+  if (!file) return;
+  document.getElementById('da-file-name').textContent = file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+  // 加载 Pyodide（如果还没加载）
+  await loadPyodideIfNeeded();
+  if (!pyodideReady) { appendDaChat('❌ Pyodide 未就绪，无法读取文件', 'error'); return; }
+  appendDaChat('⏳ 正在读取 ' + file.name + ' ...', 'system');
+  try {
+    var buf = await file.arrayBuffer();
+    var fname = '/tmp/data_' + Date.now() + '_' + file.name.replace(/[^\w.\-]/g, '_');
+    pyodideInstance.FS.writeFile(fname, new Uint8Array(buf));
+    // 让 Pyodide 读取数据到 df
+    var ext = file.name.split('.').pop().toLowerCase();
+    var readCode;
+    if (ext === 'csv' || ext === 'tsv') {
+      readCode = `import pandas as pd\ndf = pd.read_csv('${fname}', na_values=['', 'NA', 'N/A', 'null'])\nprint('shape:', df.shape)\nprint('columns:', list(df.columns))\nprint(df.head(3))`;
+    } else if (ext === 'xlsx' || ext === 'xls') {
+      readCode = `import pandas as pd\ndf = pd.read_excel('${fname}')\nprint('shape:', df.shape)\nprint('columns:', list(df.columns))\nprint(df.head(3))`;
+    } else {
+      appendDaChat('❌ 不支持的文件类型：' + ext, 'error'); return;
+    }
+    var output = pyodideInstance.runPython(readCode);
+    // 提取列名和行数
+    var info = pyodideInstance.runPython(`print(str(df.shape[0]) + '|' + '|'.join(df.columns))`);
+    var parts = info.split('|');
+    dataAnalysisContext.fileRows = parseInt(parts[0], 10);
+    dataAnalysisContext.fileCols = parts.slice(1);
+    dataAnalysisContext.fileName = file.name;
+    dataAnalysisContext.dfVar = 'df';
+    // 重置对话上下文
+    dataAnalysisMessages = [];
+    appendDaChat('✅ 数据已加载：' + file.name + ' (' + dataAnalysisContext.fileRows + ' 行 × ' + dataAnalysisContext.fileCols.length + ' 列)\n列名：' + dataAnalysisContext.fileCols.join(', '), 'system');
   } catch (e) {
-    statusEl.innerHTML = '<span style="color:var(--warn)">⚠ 网络异常：' + e.message + '</span>';
+    appendDaChat('❌ 文件读取失败：' + e.message, 'error');
   }
 }
 
-// 页面加载时刷新配额显示
-document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(refreshLambdaQuotaDisplay, 200);
-});
+// 追加对话气泡
+function appendDaChat(html, role){
+  var chat = document.getElementById('da-chat');
+  // 移除占位
+  var placeholder = chat.querySelector('div[style*="text-align:center"]');
+  if (placeholder && placeholder.textContent.indexOf('💡') >= 0) placeholder.remove();
+  var div = document.createElement('div');
+  var bg = role === 'user' ? 'rgba(99,102,241,0.15)' : role === 'error' ? 'rgba(239,68,68,0.15)' : role === 'system' ? 'rgba(156,163,175,0.15)' : 'var(--bg)';
+  var align = role === 'user' ? 'right' : 'left';
+  div.style.cssText = 'background:' + bg + ';padding:10px 14px;border-radius:10px;margin:8px 0;text-align:' + align + ';line-height:1.6;white-space:pre-wrap;word-break:break-word';
+  div.innerHTML = html;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// 主入口：用户提问 → DeepSeek 生成代码 → Pyodide 执行 → 返回
+async function askDataAnalysis(){
+  var input = document.getElementById('da-input');
+  var question = input.value.trim();
+  if (!question) return;
+  var key = localStorage.getItem('deepseek_user_key') || (document.getElementById('c-deepseek-key').value || '').trim();
+  if (!key) { alert('请先填写并验证 DeepSeek API Key'); return; }
+  if (!pyodideReady) { alert('请先点击「加载 Pyodide」'); return; }
+  if (!dataAnalysisContext.fileName) { alert('请先上传数据文件'); return; }
+  appendDaChat(escapeHtml(question), 'user');
+  input.value = '';
+  appendDaChat('⏳ AI 思考中...', 'system');
+  try {
+    var sysPrompt = buildDataAnalysisSystemPrompt();
+    var userPrompt = buildDataAnalysisUserPrompt(question);
+    var messages = [{role:'system', content: sysPrompt}].concat(dataAnalysisMessages).concat([{role:'user', content: userPrompt}]);
+    var resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'deepseek-chat', messages: messages, max_tokens: 2400, temperature: 0.3 })
+    });
+    if (!resp.ok) {
+      var errText = await resp.text();
+      removeLastDaChat(); // 移除「思考中」
+      appendDaChat('❌ DeepSeek 调用失败：' + resp.status + ' ' + errText.slice(0, 200), 'error');
+      return;
+    }
+    var data = await resp.json();
+    var aiContent = data.choices[0].message.content;
+    removeLastDaChat();
+    // 提取代码块
+    var codeMatch = aiContent.match(/```python\s*([\s\S]*?)```/);
+    var code = codeMatch ? codeMatch[1].trim() : '';
+    var explanation = aiContent.replace(/```python[\s\S]*?```/g, '').trim();
+    if (explanation) appendDaChat(escapeHtml(explanation), 'ai');
+    if (code) {
+      appendDaChat('<b style="color:var(--accent2)">📝 执行代码：</b>\n<pre style="background:var(--bg);padding:10px;border-radius:6px;overflow-x:auto;margin:6px 0;font-size:12px">' + escapeHtml(code) + '</pre>', 'ai');
+      appendDaChat('⏳ Pyodide 执行中...', 'system');
+      var result = await executePyodideCode(code);
+      removeLastDaChat();
+      appendDaChat(result, 'ai');
+      // 加入对话上下文（用于多轮）
+      dataAnalysisMessages.push({role:'user', content: userPrompt});
+      dataAnalysisMessages.push({role:'assistant', content: '代码：\n```python\n' + code + '\n```\n执行结果：\n' + result.replace(/<[^>]+>/g, '').slice(0, 500)});
+    } else {
+      appendDaChat(escapeHtml(aiContent), 'ai');
+    }
+  } catch (e) {
+    removeLastDaChat();
+    appendDaChat('❌ 异常：' + e.message, 'error');
+  }
+}
+
+function removeLastDaChat(){
+  var chat = document.getElementById('da-chat');
+  var divs = chat.querySelectorAll('div[style*="padding:10px 14px"]');
+  if (divs.length) chat.removeChild(divs[divs.length - 1]);
+}
+
+// Pyodide 执行代码，返回 HTML（含图表/输出/错误）
+async function executePyodideCode(code){
+  // 包装：捕获 stdout + 检查图表
+  var wrapped = `
+import sys, io, base64
+_old_stdout, _old_stderr = sys.stdout, sys.stderr
+sys.stdout, sys.stderr = io.StringIO(), io.StringIO()
+_err = None
+try:
+${code.split('\n').map(l => '    ' + l).join('\n')}
+except Exception as e:
+    _err = repr(e)
+_out = sys.stdout.getvalue()
+sys.stdout, sys.stderr = _old_stdout, _old_stderr
+print('STDOUT:', _out[:2000])
+if _err:
+    print('ERROR:', _err)
+# 检查是否有图表
+try:
+    _img = _render_fig()
+    print('IMG_BASE64:' + _img)
+except Exception as e:
+    print('IMG_ERR:', repr(e))
+`;
+  try {
+    var output = pyodideInstance.runPython(wrapped);
+    // 解析输出
+    var lines = output.split('\n');
+    var stdoutText = '', imgBase64 = '', errorText = '';
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i];
+      if (l.startsWith('STDOUT:')) stdoutText += l.slice(7) + '\n';
+      else if (l.startsWith('ERROR:')) errorText += l.slice(6) + '\n';
+      else if (l.startsWith('IMG_BASE64:')) imgBase64 = l.slice(11);
+      else if (l.startsWith('IMG_ERR:')) errorText += '图表渲染: ' + l.slice(8) + '\n';
+    }
+    var html = '';
+    if (stdoutText.trim()) html += '<b>📊 输出：</b>\n<pre style="background:var(--bg);padding:8px;border-radius:4px;font-size:11px;overflow-x:auto;margin:4px 0">' + escapeHtml(stdoutText.trim()) + '</pre>';
+    if (imgBase64) html += '<img src="data:image/png;base64,' + imgBase64 + '" style="max-width:100%;border-radius:6px;margin:6px 0;display:block" />';
+    if (errorText.trim()) html += '<b style="color:var(--warn)">⚠ 错误：</b>\n<pre style="background:rgba(239,68,68,0.1);padding:8px;border-radius:4px;font-size:11px;overflow-x:auto;margin:4px 0">' + escapeHtml(errorText.trim()) + '</pre>';
+    if (!html) html = '<span style="color:var(--muted)">(无输出)</span>';
+    return html;
+  } catch (e) {
+    return '<span style="color:var(--warn)">❌ Pyodide 执行异常：' + escapeHtml(e.message) + '</span>';
+  }
+}
+
+function buildDataAnalysisSystemPrompt(){
+  return `你是一位精通 pandas/numpy/matplotlib/scikit-learn 的数据分析专家。
+用户会上传数据并提出分析问题，你的任务是生成 Python 代码让 Pyodide 执行。
+
+## 严格约束（必须遵守）
+1. 数据已加载到变量 \`df\`（pandas DataFrame），直接使用 df 即可，不要重新读取文件。
+2. 只输出一段 \`\`\`python ... \`\`\` 代码块 + 简短中文解释（≤100 字）。
+3. 代码必须自包含、可直接执行：不依赖外部文件、不依赖未加载的包。
+4. 可用包：pandas, numpy, matplotlib.pyplot as plt, sklearn。不要用 seaborn/statsmodels（Pyodide 未加载）。
+5. 图表使用 matplotlib，无需 plt.show()（系统自动渲染）。
+6. 中文显示：matplotlib 默认不支持中文，请在图表标题/轴标签用英文或在代码里设 \`plt.rcParams['font.sans-serif'] = ['DejaVu Sans']\`。
+7. 输出限制：单次代码不超过 50 行，print 输出不超过 2000 字符。
+8. 多轮对话：可以引用前一轮的结果，但每次都要重新生成完整可执行代码（Pyodide 状态在多轮间保留）。
+
+## 输出格式
+<简短中文解释，1-2 句>
+\`\`\`python
+<可执行代码>
+\`\`\``;
+}
+
+function buildDataAnalysisUserPrompt(question){
+  var cols = dataAnalysisContext.fileCols.map(c => '`' + c + '`').join(', ');
+  return `数据集：${dataAnalysisContext.fileName}
+行数：${dataAnalysisContext.fileRows}
+列名：${cols}
+
+用户问题：${question}
+
+请生成分析代码。`;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 // 下载 LAMBDA 部署相关文件
 function downloadLambdaFiles(){
