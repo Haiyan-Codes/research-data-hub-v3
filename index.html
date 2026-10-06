@@ -5138,30 +5138,36 @@ else:
     <h4 style="margin:14px 0 6px;color:var(--accent)">🤖 AI 摘要（可选，需 DeepSeek Key）</h4>
     <div class="toolbar" style="flex-wrap:wrap">
       <label class="src-chk"><input type="checkbox" id="c-use-llm" checked> 启用 AI 分类摘要</label>
-      <input class="input" id="c-deepseek-key" type="password" placeholder="DeepSeek API Key（sk-xxx）" style="max-width:320px">
+      <input class="input" id="c-summary-key" type="password" placeholder="DeepSeek API Key（sk-xxx）" style="max-width:320px">
       <input class="input" id="c-llm-model" value="deepseek-chat" style="max-width:200px" title="可选 deepseek-chat / deepseek-reasoner">
     </div>
     <p style="color:var(--muted);font-size:12px;margin:6px 0 0">Key 仅写入本地脚本。不填则跳过 AI 摘要，仅做关键词自动分类。Key 获取：<a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">DeepSeek 开放平台</a> · <a href="#deepseek-guide" onclick="document.getElementById('deepseek-guide').open=true" style="color:var(--accent2)">📖 申请与购买指南</a></p>
 
-    <h4 style="margin:14px 0 6px;color:var(--warn)">🤖 智能数据分析（Pyodide 浏览器内执行，免部署）</h4>
+    <h4 style="margin:14px 0 6px;color:var(--ink2)">⬇ 生成爬虫脚本</h4>
     <div class="toolbar" style="flex-wrap:wrap;gap:10px">
-      <span style="color:var(--ink2)">DeepSeek Key</span>
-      <input class="input" id="c-deepseek-key" placeholder="sk-... 你的 DeepSeek API Key（填完失焦自动验证）" style="flex:1;min-width:200px;font-size:12px" value="" onblur="onDeepseekKeyBlur()">
-      <button class="btn" id="verify-key-btn" style="padding:6px 14px;font-size:12px" onclick="verifyDeepseekKey()">验证</button>
+      <button class="btn" onclick="generateCrawlerScript()" style="padding:10px 24px;font-size:13px;background:var(--bg-elev);color:var(--ink2);border:1px solid var(--line)">⬇ 生成爬虫脚本并下载</button>
+      <span style="color:var(--muted);font-size:12px;padding:6px 0">本地运行 Python 脚本爬取数据，结果存入 <code>crawl_output/</code></span>
     </div>
-    <p style="color:var(--muted);font-size:11px;margin:6px 0 0">
-      🔒 Key 仅保存在浏览器 localStorage，不发送到本平台服务器，直接调用 DeepSeek API 生成 Python 代码。
-      <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">获取 DeepSeek Key →</a>
-      · 数据分析完全在浏览器内执行（Pyodide + pandas/numpy/matplotlib/sklearn），数据不离开浏览器。
-    </p>
+    <div id="crawl-msg" style="margin-top:8px;color:var(--muted);font-size:13px;min-height:20px"></div>
   </div>
 
-  <!-- 智能数据分析对话区（Pyodide + DeepSeek，浏览器内执行） -->
+  <!-- ④ 智能数据分析（Pyodide + DeepSeek，浏览器内执行） -->
   <div class="about-card" id="data-analysis-chat" style="margin-top:24px;border:1px solid rgba(6,182,212,.35);background:linear-gradient(135deg,rgba(6,182,212,.05),rgba(124,58,237,.05))">
-    <h3 style="margin:0 0 8px;color:var(--accent2);font-size:18px">💬 智能数据分析对话</h3>
+    <h3 style="margin:0 0 4px;color:var(--accent2);font-size:18px">④ 💬 智能数据分析</h3>
     <p style="color:var(--ink2);font-size:13px;margin:0 0 14px">
-      上传 CSV/Excel + 输入问题 → AI 自动生成 Python 代码 → 浏览器内执行 → 产出图表与统计结果。
-      <span style="color:var(--muted);font-size:12px">（Pyodide 后台自动加载，无需手动操作）</span>
+      上传 CSV/Excel + 填 DeepSeek Key + 输入问题 → AI 自动生成 Python 代码 → 浏览器内执行 → 产出图表与统计结果。
+      <span style="color:var(--muted);font-size:12px">（Pyodide 后台自动加载，无需手动操作；数据不离开浏览器）</span>
+    </p>
+
+    <!-- DeepSeek Key 配置 -->
+    <div class="toolbar" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <span style="color:var(--ink2)">DeepSeek Key</span>
+      <input class="input" id="c-deepseek-key" type="password" placeholder="sk-... 你的 DeepSeek API Key（填完失焦自动验证）" style="flex:1;min-width:200px;font-size:12px" value="" onblur="onDeepseekKeyBlur()">
+      <button class="btn" id="verify-key-btn" style="padding:6px 14px;font-size:12px" onclick="verifyDeepseekKey()">验证</button>
+    </div>
+    <p style="color:var(--muted);font-size:11px;margin:0 0 14px">
+      🔒 Key 仅保存在浏览器 localStorage，不发送到本平台服务器，直接调用 DeepSeek API 生成 Python 代码。
+      <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent2)">获取 DeepSeek Key →</a>
     </p>
 
     <!-- Pyodide 自动加载进度条 -->
@@ -5198,15 +5204,11 @@ else:
     </div>
   </div>
 
-  <!-- 生成按钮（可选：爬取数据用） -->
-  <div class="about-card" style="margin-top:18px;text-align:center">
-    <p style="color:var(--muted);font-size:12px;margin:0 0 8px">▼ 也可以先下载爬虫脚本本地爬取数据，再上传到上方对话区分析</p>
-    <button class="btn" onclick="generateCrawlerScript()" style="padding:10px 28px;font-size:13px;background:var(--bg-elev);color:var(--ink2);border:1px solid var(--line)">⬇ 生成爬虫脚本并下载</button>
-    <div id="crawl-msg" style="margin-top:10px;color:var(--muted);font-size:13px;min-height:20px"></div>
-  </div>
+  <!-- ⑤ 补充材料 -->
+  <h3 style="margin:24px 0 8px;color:var(--accent);font-size:18px">⑤ 补充材料</h3>
 
   <!-- LAMBDA 在线版跳转入口 -->
-  <div class="about-card" style="margin-top:14px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.08));border:1px solid rgba(124,58,237,.25)">
+  <div class="about-card" style="text-align:center;background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.08));border:1px solid rgba(124,58,237,.25)">
     <p style="color:var(--ink2);font-size:13px;margin:0 0 8px">需要更强大的 AI 智能体分析（XGBoost / rstan / 完整 LAMBDA 能力）？</p>
     <a href="https://lambda.com.ai/" target="_blank" rel="noopener" style="display:inline-block;padding:10px 24px;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(124,58,237,.3)">
       🚀 试试 LAMBDA 在线版 →
