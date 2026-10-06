@@ -16434,21 +16434,17 @@ async function loadPyodideIfNeeded(){
   showPyodideProgress(true);
   try {
     setPyodideStatus('loading', '⏳ 下载 Pyodide 核心...');
-    setPyodideProgress(5, '下载 Pyodide 核心 (~5MB)');
+    setPyodideProgress(10, '下载 Pyodide 核心 (~5MB)');
     if (!window.loadPyodide) {
-      await loadScriptWithTimeout('https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js', 30000);
+      await loadScriptWithTimeout('https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js', 60000);
     }
-    setPyodideProgress(20, '初始化 Python 运行时');
+    setPyodideProgress(30, '初始化 Python 运行时');
     pyodideInstance = await window.loadPyodide({
       indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/'
     });
-    setPyodideProgress(40, '加载 pandas/numpy');
-    await pyodideInstance.loadPackage(['pandas', 'numpy', 'matplotlib', 'scikit-learn', 'xlrd', 'micropip']);
-    setPyodideProgress(70, '加载 openpyxl');
-    await pyodideInstance.runPythonAsync(`
-import micropip
-await micropip.install('openpyxl')
-`);
+    // 只加载核心包（pandas/numpy/matplotlib），sklearn 按需加载
+    setPyodideProgress(50, '加载 pandas/numpy/matplotlib');
+    await pyodideInstance.loadPackage(['pandas', 'numpy', 'matplotlib', 'openpyxl']);
     setPyodideProgress(85, '配置图表渲染');
     await pyodideInstance.runPythonAsync(`
 import matplotlib
@@ -16473,6 +16469,25 @@ def _render_fig():
     setPyodideStatus('error', '❌ ' + e.message);
     setPyodideProgress(0, '加载失败：' + e.message + '（可重试）');
     console.error('Pyodide load error:', e);
+  }
+}
+
+// 按需加载 sklearn（用户问到机器学习问题时）
+async function ensureSklearnLoaded(){
+  if (!pyodideReady || !pyodideInstance) return false;
+  try {
+    var has = await pyodideInstance.runPythonAsync('import sklearn; True');
+    return true;
+  } catch (e) {
+    setPyodideStatus('loading', '⏳ 加载 sklearn (~25MB, 较慢)...');
+    try {
+      await pyodideInstance.loadPackage('scikit-learn');
+      setPyodideStatus('ready', '✅ Pyodide + sklearn 就绪');
+      return true;
+    } catch (err) {
+      setPyodideStatus('error', '❌ sklearn 加载失败');
+      return false;
+    }
   }
 }
 
@@ -16645,6 +16660,24 @@ async function askDataAnalysis(){
       return;
     }
     removeLastDaChat();
+  }
+  // 智能按需加载 sklearn：问题包含机器学习关键词时
+  var mlKeywords = ['回归', '预测', '分类', '聚类', '机器学习', '模型', 'train', 'model', 'regression', 'classification', 'cluster', 'svm', 'random forest', '决策树', '神经网络'];
+  var needsMl = mlKeywords.some(function(kw){ return question.toLowerCase().indexOf(kw) !== -1; });
+  if (needsMl) {
+    var hasSklearn = false;
+    try {
+      await pyodideInstance.runPythonAsync('import sklearn');
+      hasSklearn = true;
+    } catch (e) { hasSklearn = false; }
+    if (!hasSklearn) {
+      appendDaChat('⏳ 检测到机器学习需求，正在加载 sklearn (~25MB, 较慢)...', 'system');
+      var loaded = await ensureSklearnLoaded();
+      removeLastDaChat();
+      if (!loaded) {
+        appendDaChat('⚠ sklearn 加载失败，请改用基础分析（pandas/matplotlib）', 'error');
+      }
+    }
   }
   appendDaChat('⏳ AI 思考中...', 'system');
   try {
