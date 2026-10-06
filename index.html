@@ -16514,15 +16514,30 @@ function setPyodideStatus(state, text){
 // 页面加载时启动自动加载指示
 document.addEventListener('DOMContentLoaded', function(){
   setPyodideStatus('loading', 'Pyodide 后台加载中');
+  // 从 localStorage 自动填入已保存的 DeepSeek Key
+  var savedKey = localStorage.getItem('deepseek_user_key') || '';
+  var keyInput = document.getElementById('c-deepseek-key');
+  if (savedKey && keyInput) {
+    keyInput.value = savedKey;
+    // 自动触发验证
+    setTimeout(verifyDeepseekKey, 500);
+  }
 });
 
 // 验证 DeepSeek Key（支持手动点按钮或失焦自动触发）
 async function verifyDeepseekKey(){
   var keyInput = document.getElementById('c-deepseek-key');
-  var key = keyInput.value.trim();
-  if (!key || !key.startsWith('sk-')) { return false; }
+  var key = (keyInput && keyInput.value || '').trim();
   var btn = document.getElementById('verify-key-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '验证中...'; }
+  if (!key) {
+    if (btn) { btn.textContent = '⚠ 请填 Key'; btn.style.background = '#ef4444'; btn.style.color = '#fff'; }
+    return false;
+  }
+  if (!key.startsWith('sk-')) {
+    if (btn) { btn.textContent = '❌ Key 需以 sk- 开头'; btn.style.background = '#ef4444'; btn.style.color = '#fff'; }
+    return false;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 验证中...'; btn.style.background = '#f59e0b'; btn.style.color = '#000'; }
   try {
     var resp = await fetch('https://api.deepseek.com/v1/models', {
       method: 'GET',
@@ -16530,20 +16545,19 @@ async function verifyDeepseekKey(){
     });
     if (resp.ok) {
       localStorage.setItem('deepseek_user_key', key);
-      if (btn) { btn.textContent = '✅ 已验证'; btn.style.background = '#22c55e'; }
+      if (btn) { btn.textContent = '✅ 已验证'; btn.style.background = '#22c55e'; btn.style.color = '#fff'; btn.disabled = false; }
       return true;
     } else if (resp.status === 401) {
-      if (btn) { btn.textContent = '❌ 无效'; btn.style.background = '#ef4444'; }
+      if (btn) { btn.textContent = '❌ Key 无效'; btn.style.background = '#ef4444'; btn.style.color = '#fff'; btn.disabled = false; }
       return false;
     } else {
-      if (btn) btn.textContent = '重试';
+      if (btn) { btn.textContent = '⚠ HTTP ' + resp.status; btn.style.background = '#ef4444'; btn.style.color = '#fff'; btn.disabled = false; }
       return false;
     }
   } catch (e) {
-    if (btn) btn.textContent = '重试';
+    console.error('DeepSeek key verify failed:', e);
+    if (btn) { btn.textContent = '⚠ 网络错误'; btn.style.background = '#ef4444'; btn.style.color = '#fff'; btn.disabled = false; }
     return false;
-  } finally {
-    if (btn) btn.disabled = false;
   }
 }
 
