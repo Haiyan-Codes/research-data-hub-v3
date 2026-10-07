@@ -4494,7 +4494,47 @@ select{cursor:pointer}
     <button data-p="library">⭐ 我的收藏</button>
     <button data-p="about">ℹ 关于</button>
   </div>
+  <div class="nav-user" id="nav-user" style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <button id="auth-btn" onclick="openAuthModal()" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">👤 登录/注册</button>
+  </div>
 </div>
+</div>
+
+<!-- 未验证邮箱横幅 -->
+<div id="verify-banner" style="display:none;background:#fef3c7;color:#92400e;padding:8px 16px;font-size:13px;text-align:center;align-items:center;justify-content:center;gap:10px">
+  <span>📧 你的邮箱尚未验证，部分功能可能受限。</span>
+  <button onclick="resendVerifyEmail()" style="background:#f59e0b;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px">重发验证邮件</button>
+</div>
+
+<!-- 登录/注册弹窗 -->
+<div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#1f2937;color:#fff;border-radius:12px;padding:28px 32px;width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <h3 id="auth-title" style="margin:0;font-size:18px;color:#fff">登录</h3>
+      <button onclick="closeAuthModal()" style="background:none;border:none;color:#9ca3af;font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div style="display:flex;gap:0;margin-bottom:18px;border-radius:6px;overflow:hidden">
+      <button id="tab-login" onclick="switchAuthTab('login')" style="flex:1;padding:8px;background:#374151;color:#9ca3af;border:none;cursor:pointer;font-size:13px">登录</button>
+      <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:8px;background:#4f46e5;color:#fff;border:none;cursor:pointer;font-size:13px">注册</button>
+    </div>
+    <div id="auth-form-login">
+      <input id="login-id" placeholder="邮箱 或 用户名" style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:8px;background:#111827;border:1px solid #374151;color:#fff;border-radius:6px;font-size:14px">
+      <input id="login-password" type="password" placeholder="密码" style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:12px;background:#111827;border:1px solid #374151;color:#fff;border-radius:6px;font-size:14px">
+      <button onclick="doLogin()" style="width:100%;padding:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600">登录</button>
+    </div>
+    <div id="auth-form-register" style="display:none">
+      <input id="reg-email" type="email" placeholder="邮箱" style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:8px;background:#111827;border:1px solid #374151;color:#fff;border-radius:6px;font-size:14px">
+      <input id="reg-username" placeholder="用户名（3-32字符，字母开头）" style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:8px;background:#111827;border:1px solid #374151;color:#fff;border-radius:6px;font-size:14px">
+      <input id="reg-password" type="password" placeholder="密码（至少8位，含字母和数字）" style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:12px;background:#111827;border:1px solid #374151;color:#fff;border-radius:6px;font-size:14px">
+      <button onclick="doRegister()" style="width:100%;padding:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600">注册并发送验证邮件</button>
+    </div>
+    <div id="auth-msg" style="margin-top:10px;font-size:13px;min-height:18px;text-align:center"></div>
+    <div id="auth-logged" style="display:none;text-align:center">
+      <div style="margin-bottom:14px">👤 <span id="auth-display-name"></span></div>
+      <div style="font-size:12px;color:#9ca3af;margin-bottom:14px" id="auth-display-email"></div>
+      <button onclick="doLogout()" style="width:100%;padding:8px;background:#374151;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">退出登录</button>
+    </div>
+  </div>
 </div>
 
 <main>
@@ -13421,6 +13461,11 @@ function newsReset(){newsPause();newsStart();}
     const fullUrl = c.url.replace(/\/+$/,'') + '/api' + path;
     const headers = {'Content-Type':'application/json'};
     if(c.key) headers['X-Worker-Key'] = c.key;
+    // 自动带 JWT（已登录用户）
+    try {
+      const _tok = localStorage.getItem('auth_token');
+      if (_tok) headers['Authorization'] = 'Bearer ' + _tok;
+    } catch(e){}
     if(body && state.sessionId) body.sessionId = state.sessionId;
     for(let attempt=0; attempt<=retries; attempt++){
       const ctrl = new AbortController();
@@ -16792,6 +16837,229 @@ function buildDataAnalysisUserPrompt(question){
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+/* ============================================================
+ * 用户登录/注册/邮箱验证（最小改造，对接 Worker /auth/* 端点）
+ * ============================================================ */
+window._authUser = null; // { email, username, emailVerified, role, tier, ... }
+
+/** 直接调用 Worker /auth/* 端点（不走 /api 前缀，不走 stFetch 的 /api 拼接） */
+async function authFetch(path, body){
+  const c = (typeof cfg === 'function') ? cfg() : { url: localStorage.getItem('st_worker_url') || '' };
+  if(!c.url) throw new Error('未配置 Worker 地址');
+  const fullUrl = c.url.replace(/\/+$/,'') + path;
+  const headers = {'Content-Type':'application/json'};
+  const tok = localStorage.getItem('auth_token');
+  if(tok) headers['Authorization'] = 'Bearer ' + tok;
+  const ctrl = new AbortController();
+  const tm = setTimeout(()=>ctrl.abort(), 30000);
+  try{
+    const resp = await fetch(fullUrl, {
+      method: body ? 'POST' : 'GET',
+      headers,
+      body: body ? JSON.stringify(body) : null,
+      signal: ctrl.signal
+    });
+    let data;
+    try{ data = await resp.json(); }catch(e){
+      const t = await resp.text().catch(()=>'');
+      throw new Error('HTTP '+resp.status+': '+t.slice(0,200));
+    }
+    if(!resp.ok){
+      throw new Error((data && data.error && (data.error.message || data.error)) || 'HTTP '+resp.status);
+    }
+    return data;
+  } finally { clearTimeout(tm); }
+}
+
+/** 页面加载时调用 /auth/me 检查登录态 */
+async function initAuth(){
+  const tok = localStorage.getItem('auth_token');
+  if(!tok){
+    updateAuthUI(null);
+    handleVerifyRedirect();
+    return;
+  }
+  try{
+    const r = await authFetch('/auth/me');
+    if(r.ok && r.user){
+      window._authUser = r.user;
+      updateAuthUI(r.user);
+    } else {
+      localStorage.removeItem('auth_token');
+      updateAuthUI(null);
+    }
+  }catch(e){
+    // 401/网络错误：清掉过期 token，但不要打扰用户
+    localStorage.removeItem('auth_token');
+    updateAuthUI(null);
+  }
+  handleVerifyRedirect();
+}
+
+/** 处理 ?verified=1|0 邮件验证回链 */
+function handleVerifyRedirect(){
+  const u = new URL(location.href);
+  const v = u.searchParams.get('verified');
+  if(v === '1'){
+    showToast('✅ 邮箱验证成功！现在可以使用全部功能。', 5000);
+    history.replaceState(null, '', u.pathname);
+  } else if(v === '0'){
+    const reason = u.searchParams.get('reason') || 'unknown';
+    showToast('⚠️ 验证失败：' + reason + '（链接可能已失效）', 6000);
+    history.replaceState(null, '', u.pathname);
+  }
+}
+
+/** 简单 toast 提示（复用已有 stMsg 若存在，否则用 alert） */
+function showToast(msg, dur){
+  if(typeof stMsg === 'function'){
+    stMsg('sys', msg);
+    setTimeout(()=>{ /* 让消息自然消失 */ }, dur || 3000);
+  } else {
+    alert(msg);
+  }
+}
+
+/** 更新右上角按钮 + 未验证横幅 */
+function updateAuthUI(user){
+  const btn = document.getElementById('auth-btn');
+  const banner = document.getElementById('verify-banner');
+  if(!btn) return;
+  if(user){
+    btn.innerHTML = '👤 ' + (user.username || user.email || '我');
+    btn.onclick = openAuthModal;
+    if(!user.emailVerified && banner){
+      banner.style.display = 'flex';
+    } else if(banner){
+      banner.style.display = 'none';
+    }
+  } else {
+    btn.innerHTML = '👤 登录/注册';
+    if(banner) banner.style.display = 'none';
+  }
+}
+
+window.openAuthModal = function(){
+  const m = document.getElementById('auth-modal');
+  if(!m) return;
+  m.style.display = 'flex';
+  if(window._authUser){
+    // 已登录 → 显示用户信息
+    document.getElementById('auth-form-login').style.display = 'none';
+    document.getElementById('auth-form-register').style.display = 'none';
+    document.getElementById('auth-logged').style.display = 'block';
+    document.getElementById('auth-display-name').textContent = window._authUser.username || '';
+    document.getElementById('auth-display-email').textContent = window._authUser.email + (window._authUser.emailVerified ? ' ✅' : ' ⚠️ 未验证');
+  } else {
+    switchAuthTab('login');
+    document.getElementById('auth-logged').style.display = 'none';
+  }
+};
+
+window.closeAuthModal = function(){
+  document.getElementById('auth-modal').style.display = 'none';
+  const msg = document.getElementById('auth-msg');
+  if(msg) msg.textContent = '';
+};
+
+window.switchAuthTab = function(tab){
+  const isLogin = (tab === 'login');
+  document.getElementById('tab-login').style.background = isLogin ? '#4f46e5' : '#374151';
+  document.getElementById('tab-login').style.color = isLogin ? '#fff' : '#9ca3af';
+  document.getElementById('tab-register').style.background = isLogin ? '#374151' : '#4f46e5';
+  document.getElementById('tab-register').style.color = isLogin ? '#9ca3af' : '#fff';
+  document.getElementById('auth-form-login').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('auth-form-register').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('auth-title').textContent = isLogin ? '登录' : '注册';
+  const msg = document.getElementById('auth-msg');
+  if(msg) msg.textContent = '';
+};
+
+window.doLogin = async function(){
+  const id = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-password').value;
+  const msg = document.getElementById('auth-msg');
+  if(!id || !pw){ if(msg) msg.textContent = '请填写完整'; return; }
+  msg.textContent = '登录中...';
+  msg.style.color = '#9ca3af';
+  try{
+    const r = await authFetch('/auth/login', { emailOrUsername: id, password: pw });
+    if(r.ok && r.token){
+      localStorage.setItem('auth_token', r.token);
+      window._authUser = r.user;
+      updateAuthUI(r.user);
+      msg.style.color = '#10b981';
+      msg.textContent = '✅ 登录成功';
+      setTimeout(()=>{ closeAuthModal(); }, 800);
+      // 触发可能的 _onAuthSuccess hook（供其他模块感知登录态变化）
+      if(typeof window._onAuthSuccess === 'function') window._onAuthSuccess(r.user);
+    } else {
+      msg.style.color = '#ef4444';
+      msg.textContent = r.error || '登录失败';
+    }
+  }catch(e){
+    msg.style.color = '#ef4444';
+    msg.textContent = '❌ ' + e.message;
+  }
+};
+
+window.doRegister = async function(){
+  const email = document.getElementById('reg-email').value.trim();
+  const username = document.getElementById('reg-username').value.trim();
+  const pw = document.getElementById('reg-password').value;
+  const msg = document.getElementById('auth-msg');
+  if(!email || !username || !pw){ if(msg) msg.textContent = '请填写完整'; return; }
+  msg.textContent = '注册中（哈希密码 + 发送验证邮件，可能 2-3 秒）...';
+  msg.style.color = '#9ca3af';
+  try{
+    const r = await authFetch('/auth/register', { email, username, password: pw });
+    if(r.ok && r.token){
+      localStorage.setItem('auth_token', r.token);
+      window._authUser = r.user;
+      updateAuthUI(r.user);
+      msg.style.color = '#10b981';
+      msg.textContent = '✅ 注册成功！请前往邮箱点击验证链接';
+      setTimeout(()=>{ closeAuthModal(); }, 1500);
+      if(typeof window._onAuthSuccess === 'function') window._onAuthSuccess(r.user);
+    } else {
+      msg.style.color = '#ef4444';
+      msg.textContent = r.error || '注册失败';
+    }
+  }catch(e){
+    msg.style.color = '#ef4444';
+    msg.textContent = '❌ ' + e.message;
+  }
+};
+
+window.doLogout = function(){
+  localStorage.removeItem('auth_token');
+  window._authUser = null;
+  updateAuthUI(null);
+  closeAuthModal();
+  showToast('已退出登录');
+};
+
+window.resendVerifyEmail = async function(){
+  if(!window._authUser){ showToast('请先登录'); return; }
+  showToast('正在发送验证邮件...');
+  try{
+    const r = await authFetch('/auth/resend', {});
+    showToast(r.message || '✅ 已重新发送，请查收');
+  }catch(e){
+    showToast('❌ ' + e.message);
+  }
+};
+
+// 页面加载完成后初始化鉴权 UI
+(function(){
+  function boot(){ try{ initAuth(); }catch(e){ console.warn('initAuth fail', e); } }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
 
 </script>
 </body></html>
