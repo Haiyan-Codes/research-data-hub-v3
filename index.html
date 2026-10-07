@@ -16843,10 +16843,14 @@ function escapeHtml(s){
  * ============================================================ */
 window._authUser = null; // { email, username, emailVerified, role, tier, ... }
 
-/** 直接调用 Worker /auth/* 端点（不走 /api 前缀，不走 stFetch 的 /api 拼接） */
+/** 直接调用 Worker /auth/* 端点（不走 /api 前缀，不走 stFetch 的 /api 拼接）
+ *  注意：必须用 cfg() 读取配置（与 stFetch 同源），不要用别的 localStorage key
+ *  兜底：若用户从未保存过 Worker 地址，默认用项目部署的 storm.mentalhealthresearch.top
+ */
 async function authFetch(path, body){
-  const c = (typeof cfg === 'function') ? cfg() : { url: localStorage.getItem('st_worker_url') || '' };
-  if(!c.url) throw new Error('未配置 Worker 地址');
+  let c = (typeof cfg === 'function') ? cfg() : { url: '' };
+  // 兜底：cfg() 没配 Worker URL 时，用项目默认 Worker 地址
+  if(!c.url) c = { url: 'https://storm.mentalhealthresearch.top', key: c.key || '' };
   const fullUrl = c.url.replace(/\/+$/,'') + path;
   const headers = {'Content-Type':'application/json'};
   const tok = localStorage.getItem('auth_token');
