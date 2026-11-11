@@ -359,6 +359,74 @@ select{cursor:pointer}
 .dset-card .dc-en{color:var(--muted);font-size:11px;font-style:italic;margin:2px 0}
 .dset-card p{margin:4px 0;color:var(--ink2);font-size:12px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .dset-card .dc-foot{color:var(--muted);font-size:11px;display:flex;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+/* =========================================================
+ * 数据集收录 · 全量目录（#ds-section-catalog）+ 量表全景索引
+ * ========================================================= */
+.cat-tabs{display:flex;gap:4px;margin:0 0 18px;padding:4px;background:var(--bg2);border:1px solid var(--line);border-radius:10px}
+.cat-tab{flex:1;padding:10px 14px;border:0;background:transparent;border-radius:7px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--ink2);transition:all .15s}
+.cat-tab:hover{background:rgba(124,58,237,.08);color:var(--ink)}
+.cat-tab.active{background:var(--bg-card);color:#a78bfa;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.cat-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+.cat-stat{border:1px solid var(--line);border-radius:10px;background:var(--bg-elev);padding:12px 14px}
+.cat-stat .v{font-size:22px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.cat-stat .k{font-size:11.5px;color:var(--muted);margin-top:2px}
+.cat-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.cat-toolbar .input{flex:1;min-width:220px}
+.cat-toolbar select{max-width:210px}
+.cat-count{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.cat-card{border:1px solid var(--line);border-radius:10px;background:var(--bg-card);padding:14px 16px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden}
+.cat-card:hover{border-color:rgba(124,58,237,.55);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.cat-card .cid{position:absolute;top:10px;right:12px;font-size:10.5px;font-family:"Source Code Pro",monospace;color:var(--muted);background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.cat-card h4{margin:0 46px 6px 0;font-size:14px;font-weight:600;line-height:1.45;color:var(--ink)}
+.cat-card p{margin:0;font-size:12.5px;line-height:1.65;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cat-card .cmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.cat-chip{font-size:10.5px;padding:2px 7px;border-radius:999px;background:rgba(124,58,237,.14);color:#c4b5fd;border:1px solid rgba(124,58,237,.28);white-space:nowrap}
+.cat-chip.t{background:rgba(6,182,212,.12);color:#67e8f9;border-color:rgba(6,182,212,.28)}
+.cat-pager{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:18px 0 4px}
+.cat-pager button{min-width:32px;padding:6px 9px;border:1px solid var(--line);background:var(--bg-elev);color:var(--ink2);border-radius:6px;font-size:12px;cursor:pointer}
+.cat-pager button:hover:not(:disabled){border-color:var(--accent);color:var(--ink)}
+.cat-pager button.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.cat-pager button:disabled{opacity:.35;cursor:default}
+/* 详情弹窗内容（深色覆盖） */
+.modal .cat-detail h1{font-size:19px;margin:0 0 12px;line-height:1.45;color:var(--ink);border-bottom:1px solid var(--line);padding:0 30px 12px 0}
+.modal .cat-detail h2{font-size:15px;margin:18px 0 8px;color:#a78bfa;border-left:3px solid var(--accent);padding-left:8px;background:none}
+.modal .cat-detail h3{font-size:13.5px;margin:14px 0 6px;color:#67e8f9}
+.modal .cat-detail p,.modal .cat-detail li{font-size:13px;line-height:1.8;color:var(--ink2)}
+.modal .cat-detail ul,.modal .cat-detail ol{padding-left:20px;margin:6px 0}
+.modal .cat-detail hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.modal .cat-detail table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0 14px}
+.modal .cat-detail th,.modal .cat-detail td{border:1px solid var(--line);padding:6px 9px;text-align:left;color:var(--ink2);vertical-align:top}
+.modal .cat-detail th{background:var(--line2);font-weight:600;color:var(--ink);white-space:nowrap}
+.modal .cat-detail td:first-child{width:auto;white-space:normal;color:var(--ink2)}
+.modal .cat-detail strong{color:var(--ink)}
+.modal .cat-detail code{background:rgba(6,182,212,.12);padding:1px 5px;border-radius:4px;font-size:12px;color:#67e8f9;font-family:"Source Code Pro",monospace}
+/* 量表索引 */
+.sc-panels{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.sc-panel-btn{padding:7px 14px;border-radius:8px;font-size:12.5px;border:1px solid var(--line);background:var(--bg-elev);color:var(--ink2);cursor:pointer;transition:all .15s}
+.sc-panel-btn:hover{border-color:var(--muted);color:var(--ink)}
+.sc-panel-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.sc-panel-btn .n{opacity:.7;font-size:10.5px;margin-left:5px}
+.sc-cat{border:1px solid var(--line);border-left-width:3px;border-radius:10px;margin-bottom:12px;overflow:hidden;background:var(--bg-card)}
+.sc-cat-h{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;background:var(--bg-elev);user-select:none}
+.sc-cat-h .ico{font-size:15px;line-height:1}
+.sc-cat-h .nm{font-size:13.5px;font-weight:600;flex:1;color:var(--ink)}
+.sc-cat-h .cnt{font-size:11px;color:var(--muted)}
+.sc-cat-h .arw{font-size:11px;color:var(--muted);transition:transform .15s}
+.sc-cat-h.on .arw{transform:rotate(90deg)}
+.sc-cat-body{padding:4px 14px 10px}
+.sc-cat-body.hide{display:none}
+.sc-row{padding:9px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.sc-row:last-child{border-bottom:0}
+.sc-row .nm{font-weight:600;color:var(--ink);font-size:13px}
+.sc-row .fn{color:var(--ink2);margin-top:2px;font-size:12px;line-height:1.6}
+.sc-row .rs{color:var(--muted);margin-top:3px;font-size:11.5px}
+.sc-ids{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.sc-id{font-family:"Source Code Pro",monospace;font-size:10.5px;padding:1px 6px;border-radius:5px;border:1px solid rgba(6,182,212,.35);background:rgba(6,182,212,.1);color:#67e8f9;cursor:pointer}
+.sc-id:hover{background:rgba(6,182,212,.28);color:#fff}
+.sc-conf{font-size:10px;padding:1px 6px;border-radius:999px;margin-left:6px;background:rgba(245,158,11,.16);color:#fbbf24;vertical-align:1px}
+.sc-conf.hi{background:rgba(16,185,129,.16);color:#6ee7b7}
+@media(max-width:720px){.cat-grid{grid-template-columns:1fr}.cat-toolbar select{max-width:none;flex:1}.modal{padding:20px 16px}}
 /* modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-bg.open{display:flex}
@@ -4490,6 +4558,7 @@ select{cursor:pointer}
     <button data-p="search" class="">文献检索</button>
     <button data-p="agent" class="">文献研究智能体</button>
     <button data-p="datasets">数据集收录</button>
+    
     <button data-p="crawl" class="">数据爬取与智能分析</button>
     <button data-p="library">⭐ 我的收藏</button>
     <button data-p="about">ℹ 关于</button>
@@ -4997,30 +5066,68 @@ else:
 
 <!-- ============ PAGE DATASETS: 数据集收录 ============ -->
 <section id="p-datasets" class="page">
-  <div class="page-title"><h2>数据集收录</h2><div class="meta">公开数据集 · 私有数据集</div></div>
+  <div class="page-title"><h2>数据集收录</h2><div class="meta">公开数据集（全量 294 条）· 私有数据集 · 量表全景索引</div></div>
 
   <!-- 顶部快速跳转按钮 -->
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px">
     <button class="btn sm teal" onclick="document.getElementById('ds-section-public').scrollIntoView({behavior:'smooth',block:'start'})"> 公开数据集</button>
     <button class="btn sm violet" onclick="document.getElementById('ds-section-private').scrollIntoView({behavior:'smooth',block:'start'})"> 私有数据集</button>
+    <button class="btn sm amber" onclick="catJump()"> 量表全景索引</button>
   </div>
 
-  <!-- 模块1：公开数据集 -->
+  <!-- 模块1：公开数据集（85 条精选 + 294 条全量目录，统一检索与分类） -->
   <div id="ds-section-public">
     <div id="ds-tab-public">
-      <div class="page-title" style="margin-top:0"><h2>公开数据集</h2><div class="meta" id="dset-count">载入中…</div></div>
-      <div id="dset-tabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"><button class="dset-cat-btn active" data-c="all" onclick="filterDsets('all')">全部</button><button class="dset-cat-btn" data-c="m1" onclick="filterDsets('m1')">中国国内</button><button class="dset-cat-btn" data-c="m2" onclick="filterDsets('m2')">国际数据</button><button class="dset-cat-btn" data-c="m3" onclick="filterDsets('m3')">脑科学</button><button class="dset-cat-btn" data-c="policy" onclick="filterDsets('policy')">政策/监测</button><button class="dset-cat-btn" data-c="survey" onclick="filterDsets('survey')">调查/队列</button></div>
-      <div id="dset-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
-      <div id="dset-pager" style="display:flex;gap:4px;justify-content:center;margin:16px 0;flex-wrap:wrap"></div>
+      <div class="page-title" style="margin-top:0"><h2>公开数据集</h2><div class="meta">85 条精选 + 294 条全量目录 · 支持关键词检索与分类筛选</div></div>
+
+      <div class="cat-stats" id="cat-stats"></div>
+
+      <div class="cat-toolbar">
+        <input class="input" id="pub-q" placeholder="搜索数据集名称 / 主题 / 地区 / 关键词…" oninput="pubSearch(this.value)">
+        <button class="btn sm" onclick="pubReset()">重置</button>
+        <button class="btn sm teal" onclick="catExport()">导出 CSV</button>
+      </div>
+
+      <div id="pub-cats" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="dset-cat-btn active" data-c="all" onclick="pubSetCat('all')">全部</button>
+        <button class="dset-cat-btn" data-c="m1" onclick="pubSetCat('m1')">中国国内</button>
+        <button class="dset-cat-btn" data-c="m2" onclick="pubSetCat('m2')">国际数据</button>
+        <button class="dset-cat-btn" data-c="m3" onclick="pubSetCat('m3')">脑科学</button>
+        <button class="dset-cat-btn" data-c="policy" onclick="pubSetCat('policy')">政策/监测</button>
+        <button class="dset-cat-btn" data-c="survey" onclick="pubSetCat('survey')">调查/队列</button>
+      </div>
+
+      <div class="cat-count" id="cat-count">载入中…</div>
+      <div class="cat-grid" id="pub-grid"></div>
+      <div class="cat-pager" id="pub-pager"></div>
     </div>
   </div>
 
-  <!-- 模块3：私有数据集（JS 在 init 时把原 p-health 的内容搬到这里） -->
+  <!-- 模块2：私有数据集（JS 在 init 时把原 p-health 的内容搬到这里） -->
   <div id="ds-section-private" style="margin-top:32px">
     <h3 style="margin:0 0 12px;padding-top:8px"> 私有数据集</h3>
     <div id="ds-tab-private"></div>
   </div>
-</section>
+
+  <!-- 模块3：心理健康数据集量表全景索引 -->
+  <div id="ds-section-catalog" style="margin-top:40px">
+    <div class="page-title" style="margin-top:0"><h2>心理健康数据集量表全景索引</h2><div class="meta">已确认 / 推测 / 自创 / 非问卷 · 点击 #id 查看数据集详情</div></div>
+    <div class="cat-stats" id="sc-stats"></div>
+    <div class="sc-panels" id="sc-panels"></div>
+    <div class="cat-toolbar">
+      <input class="input" id="sc-q" placeholder="搜索量表名 / 全称 / 数据集 id…" oninput="catState.scQ=this.value;scRender()">
+    </div>
+    <div id="sc-body"></div>
+  </div>
+
+  <!-- 详情弹窗（整页共用） -->
+  <div class="modal-bg" id="cat-modal-bg" onclick="if(event.target===this)catCloseDetail()">
+    <div class="modal" style="max-width:940px">
+      <button class="close-btn" onclick="catCloseDetail()">✕</button>
+      <div class="cat-detail" id="cat-detail"></div>
+    </div>
+  </div>
+</section><!-- /p-datasets -->
 
 <!-- ============ PAGE HEALTH: 卫生健康数据智能库 ============ -->
 <section id="p-health" class="page">
@@ -5536,6 +5643,7 @@ function go(p){
   if(p==='library') renderLib();
   if(p==='home') renderHomeStats();
   if(p==='datasets') initDatasetsTab();
+  if(p==='datasets') initCatalog();
   if(p==='analyze' && !window._analyzeInited){
     // 首次进入分析台：自动加载示例数据，让变量立即可见
     window._analyzeInited=true;
@@ -5549,7 +5657,10 @@ function go(p){
     }, 350);
   }
   window.scrollTo({top:0,behavior:'smooth'});
-  location.hash='#/'+p;
+  if(p!=='datasets' && typeof catCloseDetail==='function') catCloseDetail();
+  var want='#/'+p;
+  // 保留 #/catalog/<id> 这类子路径，避免深链被重写成 #/catalog
+  if(location.hash!==want && (location.hash||'').indexOf(want+'/')!==0) location.hash=want;
 }
 document.getElementById('nav-tabs').addEventListener('click',function(e){
   if(e.target.dataset.p) go(e.target.dataset.p);
@@ -5560,8 +5671,8 @@ function initDatasetsTab(){
   if(window._dsInited) return;
   window._dsInited = true;
 
-  // 1. 把首页 #p-home 里的「公开数据集」section（dset-tabs/dset-grid/dset-pager + page-title）搬到 #ds-tab-public
-  var pubMount = document.getElementById('ds-tab-public');
+  // 1. 把首页 #p-home 里的「公开数据集」section（dset-tabs/dset-grid/dset-pager + page-title）搬到 #pub-view-curated
+  var pubMount = document.getElementById('pub-view-curated') || document.getElementById('ds-tab-public');
   if(pubMount){
     // 搬迁首页公开数据集标题 + 分类按钮 + 卡片网格 + 分页器
     ['dset-tabs','dset-grid','dset-pager'].forEach(function(id){
@@ -8637,15 +8748,365 @@ function loadAgentDataToAnalyze(){
   },300);
 }
 
+/* ========= DATASET CATALOG: 294 条全量目录 + 量表全景索引 ========= */
+var CAT_SRC={meta:'catalog_meta.js?v=20261111',detail:'catalog_detail.js?v=20261111',scales:'scales_data.js?v=20261111'};
+var CAT_OK={}, CAT_P={};
+var catState={page:0,size:24,theme:'all',region:'all',q:'',scPanel:'confirmed',scQ:'',pendId:null};
+
+function catEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function catLoad(key){
+  if(CAT_OK[key]) return Promise.resolve();
+  if(CAT_P[key]) return CAT_P[key];
+  CAT_P[key]=new Promise(function(res,rej){
+    var s=document.createElement('script');
+    s.src=CAT_SRC[key];
+    s.onload=function(){CAT_OK[key]=1;res()};
+    s.onerror=function(){rej(new Error(CAT_SRC[key]+' 加载失败'))};
+    document.head.appendChild(s);
+  });
+  return CAT_P[key];
+}
+
+function catJump(){
+  initCatalog();
+  var el=document.getElementById('ds-section-catalog');
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function initCatalog(){
+  if(!window._catInited){
+    window._catInited=1;
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') catCloseDetail(); });
+  }
+  scRender();
+  var c=document.getElementById('cat-count');
+  if(!window.CATALOG){
+    if(c) c.textContent='正在载入 294 条目录…';
+    catLoad('meta').then(function(){ catBuildStats(); pubRender(); catMaybeOpen(); })
+      .catch(function(e){ if(c) c.textContent='目录加载失败：'+e.message; });
+  }else{
+    catBuildStats(); pubRender(); catMaybeOpen();
+  }
+}
+
+function catMaybeOpen(){
+  if(catState.pendId){
+    var id=catState.pendId; catState.pendId=null;
+    catOpenDetail(id);
+  }
+}
+
+function catBuildStats(){
+  var C=window.CATALOG, el=document.getElementById('cat-stats');
+  if(!C||!el) return;
+  var n=((C.datasets||[]).length+(window.KNOWN_DATASETS||[]).length), nt=Object.keys(C.categories||{}).length, nr=Object.keys(C.region_stats||{}).length;
+  var h='<div class="cat-stat"><div class="v">'+n+'</div><div class="k">数据集条目</div></div>'
+    +'<div class="cat-stat"><div class="v">'+nt+'</div><div class="k">主题分类</div></div>'
+    +'<div class="cat-stat"><div class="v">'+nr+'</div><div class="k">覆盖地区</div></div>';
+  if(window.SCALES) h+='<div class="cat-stat"><div class="v">'+window.SCALES.stats.confirmed_scales+'</div><div class="k">已确认量表条目</div></div>';
+  el.innerHTML=h;
+}
+
+function catTitle(d){
+  var f=(d.filename||('数据集 '+d.id)).replace(/\.(csv|xlsx?|sav|dta|json|numbers|txt|zip|pdf|rds|por|docx?)$/i,'');
+  f=f.replace(/^\d+_+/,'').replace(/_+/g,' ').replace(/\s+/g,' ').trim();
+  if(!f){ var ds=((window.SCALES||{}).ds||{})[d.id]; f=(ds&&ds.n)||('数据集 '+d.id); }
+  return f;
+}
+
+/* ---- 公开数据集：85 条精选 + 294 条全量目录，合并浏览 ---- */
+var pubState={cat:'all',q:'',page:0,size:24};
+
+function pubCatsOf(d){
+  var out=[], t=(d.tag||'');
+  if(d.cat==='m1'||d.cat==='m2'||d.cat==='m3') out.push(d.cat);
+  if(/政策|监测|评估/.test(t)) out.push('policy');
+  if(/调查|队列|CFPS|CHARLS/.test(t)) out.push('survey');
+  return out.length?out:['m2'];
+}
+
+function pubItems(){
+  var out=[];
+  (window.KNOWN_DATASETS||[]).forEach(function(d){
+    out.push({k:'cur',id:d.id,title:d.title,en:d.en||'',desc:d.summary||'',tag:d.tag||'',cats:pubCatsOf(d),raw:d});
+  });
+  ((window.CATALOG||{}).datasets||[]).forEach(function(d){
+    out.push({k:'cat',id:d.id,title:catTitle(d),en:'',desc:d.description||'',tag:d.region||'',cats:['m2'],raw:d});
+  });
+  return out;
+}
+
+function pubFiltered(){
+  var q=(pubState.q||'').trim().toLowerCase();
+  return pubItems().filter(function(it){
+    if(pubState.cat!=='all' && it.cats.indexOf(pubState.cat)<0) return false;
+    if(!q) return true;
+    if(String(it.id)===q) return true;
+    var hay=[it.title,it.en,it.desc,it.tag,it.id].join(' ').toLowerCase();
+    return hay.indexOf(q)>=0;
+  });
+}
+
+function pubCard(it){
+  if(it.k==='cur'){
+    var d=it.raw, tc=d.cat==='m1'?'ok':(d.cat==='m3'?'warn':'grey');
+    return '<div class="dset-card" onclick="pubOpenCurated(\''+d.id+'\')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4>'+d.title+'</h4><span class="chip '+tc+'">'+(d.tag||'')+'</span></div><div class="dc-en">'+(d.en||'')+'</div><p>'+(d.summary||'')+'</p><div class="dc-foot"><span>'+(d.footL||'')+'</span><span>'+(d.footR||'')+'</span></div></div>';
+  }
+  return catCard(it.raw);
+}
+
+function pubRender(){
+  var grid=document.getElementById('pub-grid'), cnt=document.getElementById('cat-count'), pager=document.getElementById('pub-pager');
+  if(!grid) return;
+  var rows=pubFiltered(), pages=Math.max(1,Math.ceil(rows.length/pubState.size));
+  if(pubState.page>=pages) pubState.page=pages-1;
+  if(pubState.page<0) pubState.page=0;
+  var s=pubState.page*pubState.size, page=rows.slice(s,s+pubState.size);
+  var nCur=(window.KNOWN_DATASETS||[]).length, nCat=((window.CATALOG||{}).datasets||[]).length;
+  if(cnt) cnt.textContent='共 '+rows.length+' 条（精选 '+nCur+' + 全量目录 '+nCat+'）· 当前 '+(rows.length?((s+1)+'–'+(s+page.length)):'0')+' · 每页 '+pubState.size+' 条';
+  grid.innerHTML=page.length?page.map(pubCard).join('')
+    :'<div class="empty-tip" style="grid-column:1/-1">没有匹配的数据集，试试清空关键词或切换分类</div>';
+  if(pager) pager.innerHTML=rows.length>pubState.size?catPagerHtml(pages):'';
+}
+
+function pubSetCat(c){
+  pubState.cat=c; pubState.page=0;
+  document.querySelectorAll('#pub-cats .dset-cat-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.c===c); });
+  pubRender();
+}
+
+function pubSearch(v){ pubState.q=v||''; pubState.page=0; pubRender(); }
+
+function pubReset(){
+  pubState.cat='all'; pubState.q=''; pubState.page=0;
+  var q=document.getElementById('pub-q'); if(q) q.value='';
+  document.querySelectorAll('#pub-cats .dset-cat-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.c==='all'); });
+  pubRender();
+}
+
+function pubGo(i){
+  pubState.page=i; pubRender();
+  var g=document.getElementById('pub-grid');
+  if(g) g.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function catPagerHtml(pages){
+  var cur=pubState.page, h='';
+  h+='<button '+(cur<=0?'disabled':'')+' onclick="pubGo(0)">«</button>';
+  h+='<button '+(cur<=0?'disabled':'')+' onclick="pubGo('+(cur-1)+')">‹</button>';
+  var s=Math.max(0,cur-2), e=Math.min(pages-1,s+4); s=Math.max(0,e-4);
+  for(var i=s;i<=e;i++) h+='<button class="'+(i===cur?'active':'')+'" onclick="pubGo('+i+')">'+(i+1)+'</button>';
+  h+='<button '+(cur>=pages-1?'disabled':'')+' onclick="pubGo('+(cur+1)+')">›</button>';
+  h+='<button '+(cur>=pages-1?'disabled':'')+' onclick="pubGo('+(pages-1)+')">»</button>';
+  return h;
+}
+
+/* 精选条目的详情（复用全页详情弹窗） */
+function pubOpenCurated(id){
+  var d=(window.KNOWN_DATASETS||[]).find(function(x){return x.id===id}); if(!d) return;
+  var bg=document.getElementById('cat-modal-bg'), body=document.getElementById('cat-detail');
+  if(!bg||!body) return;
+  function tbl(title,arr){
+    if(!arr||!arr.length) return '';
+    return '<h2>'+title+'</h2><table>'+arr.map(function(r){return '<tr><th>'+r.k+'</th><td>'+r.v+'</td></tr>'}).join('')+'</table>';
+  }
+  var html='<h1>'+d.title+'</h1>';
+  if(d.en) html+='<p style="color:var(--muted);margin-top:-6px">'+d.en+'</p>';
+  if(d.summary) html+='<p>'+d.summary+'</p>';
+  html+=tbl('基本信息',d.basic)+tbl('数据结构',d.struct)+tbl('研究问题',d.q)+tbl('获取方式',d.access);
+  if(d.lit&&d.lit.length){
+    html+='<h2>核心文献</h2>'+d.lit.map(function(l){return '<p>'+l.ref+(l.doi?'<br><code>DOI: '+l.doi+'</code>':'')+'</p>'}).join('');
+  }
+  bg.classList.add('open'); body.innerHTML=html;
+  bg.querySelector('.modal').scrollTop=0;
+}
+
+function catCard(d){
+  var chips='';
+  (d.category_letters||[]).slice(0,3).forEach(function(k){
+    var nm=((window.CATALOG.categories||{})[k]||{}).name||'';
+    chips+='<span class="cat-chip">'+k+' '+catEsc(nm)+'</span>';
+  });
+  var meta='';
+  if(d.region) meta+='<span class="cat-chip t">'+catEsc(d.region)+'</span>';
+  if(d.sample_size && d.sample_size!=='-') meta+='<span class="cat-chip t">n='+catEsc(d.sample_size)+'</span>';
+  if(d.time_info && d.time_info!=='-') meta+='<span class="cat-chip t">'+catEsc(d.time_info)+'</span>';
+  return '<div class="cat-card" onclick="catOpenDetail('+d.id+')">'
+    +'<span class="cid">#'+d.id+'</span>'
+    +'<h4>'+catEsc(catTitle(d))+'</h4>'
+    +'<p>'+catEsc(d.description||'（暂无简介）')+'</p>'
+    +'<div class="cmeta">'+chips+meta+'</div></div>';
+}
+
+function catOpenDetail(id){
+  id=String(id);
+  var bg=document.getElementById('cat-modal-bg'), body=document.getElementById('cat-detail');
+  if(!bg||!body) return;
+  var pg=document.getElementById('p-datasets');
+  if(pg && pg.classList.contains('active') && location.hash!=='#/catalog/'+id){
+    try{ history.replaceState(null,'','#/catalog/'+id); }catch(e){}
+  }
+  bg.classList.add('open');
+  body.innerHTML='<div class="empty-tip">正在载入详情…</div>';
+  bg.querySelector('.modal').scrollTop=0;
+  catLoad('detail').then(function(){
+    var html=(window.CATALOG_DETAIL||{})[id];
+    body.innerHTML=html||('<h1>未找到该条目</h1><p>id='+catEsc(id)+' 不在目录中。</p>');
+  }).catch(function(e){
+    body.innerHTML='<div class="empty-tip">详情加载失败：'+catEsc(e.message)+'</div>';
+  });
+}
+
+function catCloseDetail(){
+  var bg=document.getElementById('cat-modal-bg');
+  if(bg) bg.classList.remove('open');
+  if(location.hash.indexOf('#/catalog/')===0){
+    try{ history.replaceState(null,'','#/datasets'); }catch(e){}
+  }
+}
+
+function catExport(){
+  var rows=pubFiltered();
+  if(!rows.length){ alert('当前筛选结果为空，无法导出'); return; }
+  var head=['id','来源','名称','英文名','分类','地区/标签','时间','样本量','变量数','简介'];
+  var lines=[head.join(',')];
+  rows.forEach(function(it){
+    var d=it.raw||{}, vals;
+    if(it.k==='cur'){
+      vals=[it.id,'精选',it.title,it.en,it.tag,'','','','',it.desc];
+    }else{
+      vals=[d.id,'全量目录',catTitle(d),'',(d.theme||''),(d.region||''),(d.time_info||''),(d.sample_size||''),(d.var_count||''),(d.description||'')];
+    }
+    lines.push(vals.map(function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }).join(','));
+  });
+  var blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='数据集目录_'+rows.length+'条.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },3000);
+}
+
+/* ---- 量表索引 ---- */
+function scBuildPanels(){
+  var el=document.getElementById('sc-panels'); if(!el||!window.SCALES) return;
+  var st=window.SCALES.stats;
+  var defs=[
+    ['confirmed','✅ 已确认量表',st.confirmed_ds+' 集 / '+st.confirmed_scales+' 量表'],
+    ['inferred','🔍 推测量表',st.inferred_ds+' 集 / '+st.inferred_scales+' 量表'],
+    ['custom','✏️ 自创问卷',st.custom+' 集'],
+    ['noscale','📄 非问卷数据',st.noscale+' 集']
+  ];
+  el.innerHTML=defs.map(function(d){
+    return '<button class="sc-panel-btn'+(catState.scPanel===d[0]?' active':'')+'" onclick="scSwitchPanel(\''+d[0]+'\')">'+d[1]+'<span class="n">'+d[2]+'</span></button>';
+  }).join('');
+}
+
+function scBuildStats(){
+  var el=document.getElementById('sc-stats'); if(!el||!window.SCALES) return;
+  var st=window.SCALES.stats;
+  el.innerHTML='<div class="cat-stat"><div class="v">'+st.confirmed_ds+'</div><div class="k">已确认量表 · 数据集</div></div>'
+    +'<div class="cat-stat"><div class="v">'+st.confirmed_scales+'</div><div class="k">已确认量表条目</div></div>'
+    +'<div class="cat-stat"><div class="v">'+st.inferred_scales+'</div><div class="k">推测量表条目</div></div>'
+    +'<div class="cat-stat"><div class="v">'+st.noscale+'</div><div class="k">非问卷类数据</div></div>';
+}
+
+function scSwitchPanel(p){ catState.scPanel=p; scRender(); }
+
+function scToggle(h){
+  var body=h.nextElementSibling;
+  if(!body) return;
+  body.classList.toggle('hide');
+  h.classList.toggle('on');
+}
+
+function scIdBadge(id){
+  var d=((window.SCALES||{}).ds||{})[id]||{};
+  var t=d.n?(' title="'+catEsc(d.n)+'"'):'';
+  return '<span class="sc-id"'+t+' onclick="catOpenDetail('+id+')">#'+id+'</span>';
+}
+
+function scRender(){
+  var body=document.getElementById('sc-body');
+  if(!body) return;
+  if(!window.SCALES){
+    body.innerHTML='<div class="empty-tip">正在载入量表索引…</div>';
+    catLoad('scales').then(function(){ scRender(); catBuildStats(); })
+      .catch(function(e){ body.innerHTML='<div class="empty-tip">量表索引加载失败：'+catEsc(e.message)+'</div>'; });
+    return;
+  }
+  var S=window.SCALES, q=(catState.scQ||'').trim().toLowerCase(), pan=catState.scPanel, html='';
+  function hit(t){ return !q || String(t==null?'':t).toLowerCase().indexOf(q)>=0; }
+  scBuildPanels(); scBuildStats();
+
+  if(pan==='confirmed'||pan==='inferred'){
+    var src=S[pan]||{};
+    Object.keys(src).forEach(function(cat){
+      var c=src[cat], rows='', n=0;
+      (c.scales||[]).forEach(function(sc){
+        var ids=sc.ids||[];
+        if(q && !(hit(sc.name)||hit(sc.full)||hit(sc.reason)||ids.join(',').indexOf(q)>=0)) return;
+        n++;
+        rows+='<div class="sc-row"><div class="nm">'+catEsc(sc.name)
+          +(sc.conf?'<span class="sc-conf'+(sc.conf==='高'?' hi':'')+'">置信 '+catEsc(sc.conf)+'</span>':'')
+          +'</div>'
+          +(sc.full?'<div class="fn">'+catEsc(sc.full)+'</div>':'')
+          +(sc.reason?'<div class="rs">依据：'+catEsc(sc.reason)+'</div>':'')
+          +'<div class="sc-ids">'+ids.map(scIdBadge).join('')+'</div></div>';
+      });
+      if(!n) return;
+      html+='<div class="sc-cat" style="border-left-color:'+(c.color||'#7c3aed')+'">'
+        +'<div class="sc-cat-h on" onclick="scToggle(this)"><span class="ico">'+(c.icon||'•')+'</span><span class="nm">'+catEsc(cat)+'</span><span class="cnt">'+n+' 个量表</span><span class="arw">▶</span></div>'
+        +'<div class="sc-cat-body">'+rows+'</div></div>';
+    });
+  }else if(pan==='custom'){
+    var rows2='';
+    (S.custom||[]).forEach(function(it){
+      if(q && !(hit(it.name)||hit(it.desc)||String(it.id)===q)) return;
+      rows2+='<div class="sc-row"><div class="nm">'+catEsc(it.name)
+        +(it.conf?'<span class="sc-conf'+(it.conf==='高'?' hi':'')+'">置信 '+catEsc(it.conf)+'</span>':'')+'</div>'
+        +'<div class="fn">'+catEsc(it.desc||'')+'</div>'
+        +'<div class="sc-ids">'+scIdBadge(it.id)+'</div></div>';
+    });
+    html=rows2?('<div class="sc-cat" style="border-left-color:#8b5cf6">'
+      +'<div class="sc-cat-h on"><span class="ico">✏️</span><span class="nm">自创问卷 / 题目</span><span class="cnt">'+(S.custom||[]).length+' 数据集</span></div>'
+      +'<div class="sc-cat-body">'+rows2+'</div></div>'):'';
+  }else{
+    Object.keys(S.noscale||{}).forEach(function(cat){
+      var ids=(S.noscale[cat]||[]).filter(function(id){
+        if(!q) return true;
+        var d=(S.ds||{})[id]||{};
+        return String(id)===q || hit(d.n) || hit(d.d) || hit(cat);
+      });
+      if(!ids.length) return;
+      html+='<div class="sc-cat" style="border-left-color:#64748b">'
+        +'<div class="sc-cat-h on" onclick="scToggle(this)"><span class="ico">📄</span><span class="nm">'+catEsc(cat)+'</span><span class="cnt">'+ids.length+' 数据集</span><span class="arw">▶</span></div>'
+        +'<div class="sc-cat-body"><div class="sc-ids" style="margin-top:10px">'+ids.map(scIdBadge).join('')+'</div></div></div>';
+    });
+  }
+  body.innerHTML=html||'<div class="empty-tip">没有匹配的量表或数据集</div>';
+}
+
 /* ========= INIT ========= */
 window.addEventListener('hashchange',function(){
-  var p=(location.hash||'#/home').replace('#/','');
+  var raw=(location.hash||'#/home').replace('#/','');
+  var parts=raw.split('/'), p=parts[0];
+  if(p==='catalog'){
+    if(parts[1]) catState.pendId=parts[1];
+    go('datasets');
+    return;
+  }
   if(['home','search','agent','analyze','library','datasets','about'].indexOf(p)>=0) go(p);
 });
 function init(){
   renderHomeStats();
-  var p=(location.hash||'#/home').replace('#/','');
-  if(['home','search','agent','analyze','library','datasets','about'].indexOf(p)>=0) go(p);
+  var raw=(location.hash||'#/home').replace('#/','');
+  var parts=raw.split('/'), p=parts[0];
+  if(p==='catalog'){
+    if(parts[1]) catState.pendId=parts[1];
+    go('datasets');
+  }else if(['home','search','agent','analyze','library','datasets','about'].indexOf(p)>=0) go(p);
   document.getElementById('q').addEventListener('keydown',function(e){ if(e.key==='Enter') doSearch(); });
   var ed=document.getElementById('rs-code');
   if(ed){ed.addEventListener('keydown',function(e){
@@ -13129,13 +13590,14 @@ function matchCat(d,cat){
   return false;
 }
 function renderDsets(){
+  var grid=document.getElementById('dset-grid');
+  if(!grid) return;
   initDatasetTabs();
   // update active tab
   document.querySelectorAll('#dset-tabs .dset-cat-btn').forEach(function(b){b.classList.toggle('active', b.dataset.c===dsetCat)});
   var all=window.KNOWN_DATASETS||[];
   var filtered=all.filter(function(d){return matchCat(d,dsetCat)});
   var start=dsetPage*dsetPageSize,list=filtered.slice(start,start+dsetPageSize);
-  var grid=document.getElementById('dset-grid');
   if(list.length===0){grid.innerHTML='<div class="empty-tip" style="grid-column:1/-1">此分类下暂无数据集</div>';return}
   grid.innerHTML=list.map(function(d){
     var tagClass=d.cat==='m1'?'ok':(d.cat==='m3'?'warn':'grey');
