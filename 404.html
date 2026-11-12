@@ -9017,7 +9017,13 @@ function catExport(){
 }
 
 /* ========= 政策法规：法律法规 / 政策文件 ========= */
-var POL_SRC={meta:'policies_meta.js?v=20261111',detail:'policies_detail.js?v=20261111'};
+var POL_VER='20261112';
+var POL_SRC={meta:'policies_meta.js?v='+POL_VER,
+  'national':'policies_detail_national.js?v='+POL_VER,
+  'ministry':'policies_detail_ministry.js?v='+POL_VER,
+  'local':'policies_detail_local.js?v='+POL_VER,
+  'intl':'policies_detail_intl.js?v='+POL_VER,
+  'foreign':'policies_detail_foreign.js?v='+POL_VER};
 var POL_OK={},POL_P={};
 var polState={cat:'all',q:'',year:'all',page:0,size:24,pendId:null};
 
@@ -9142,7 +9148,8 @@ function polOpenDetail(id){
   body.innerHTML='<div class="empty-tip">正在载入全文…</div>';
   bg.querySelector('.modal').scrollTop=0;
   var d=polItems().find(function(x){return x.id===id;}) || null;
-  polLoad('detail').then(function(){
+  var catKey=(d&&d.category)||'national';
+  polLoad(catKey).then(function(){
     var txt=(window.POLICY_TEXT||{})[id]||'';
     var h='<h1>'+catEsc(d?d.title:id)+'</h1>';
     if(d){
