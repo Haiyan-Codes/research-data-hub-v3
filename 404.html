@@ -14582,9 +14582,14 @@ function newsReset(){newsPause();newsStart();}
 
   /* ======== 后端代理对接层 ======== */
   function cfg(){
+    var o = {};
+    try{ o = JSON.parse(localStorage.getItem(ST_LS_CFG)||'{}') || {}; }catch(e){ o = {}; }
+    var eu = '', ek = '';
+    try{ eu = $('st-worker-url').value.trim().replace(/\/+$/,''); }catch(e){}
+    try{ ek = $('st-worker-key').value.trim(); }catch(e){}
     return {
-      url: (localStorage.getItem(ST_LS_CFG) ? JSON.parse(localStorage.getItem(ST_LS_CFG)).url : '') || '',
-      key: (localStorage.getItem(ST_LS_CFG) ? JSON.parse(localStorage.getItem(ST_LS_CFG)).key : '') || ''
+      url: (o.url || eu || 'https://storm.mentalhealthresearch.top'),
+      key: (o.key || ek || '')
     };
   }
   window.stSaveConfig = function(){
@@ -14658,7 +14663,7 @@ function newsReset(){newsPause();newsStart();}
     $('st-ping').style.color = 'var(--muted)';
     try{
       const c = cfg();
-      if(!c.url) throw new Error('❌ 请先填写并保存 Worker 地址。');
+      if(!c.url) throw new Error('请先填写并保存后端地址。');
       const t0 = Date.now();
       const fullUrl = c.url.replace(/\/+$/,'') + '/api/health';
       const headers = {'Content-Type':'application/json'};
