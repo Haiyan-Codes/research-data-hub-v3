@@ -456,12 +456,19 @@ select{cursor:pointer}
 .tax-badge.ds{background:rgba(16,185,129,.13);border-color:rgba(16,185,129,.35);color:#6ee7b7}
 .tax-badge.sc{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.35);color:#fbbf24}
 .tax-mapbox{border:1px solid var(--line);border-radius:12px;background:var(--bg-card);padding:12px 14px;margin-bottom:10px}
-.tax-map{position:relative;width:100%;height:300px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.02)}
-.tax-cell{position:absolute;box-sizing:border-box;border-radius:5px;padding:4px 7px;overflow:hidden;cursor:pointer;border:1px solid transparent;transition:box-shadow .12s,transform .12s;display:flex;flex-direction:column;justify-content:center;font-size:11px;line-height:1.25;color:var(--ink)}
-.tax-cell:hover{box-shadow:0 0 0 2px rgba(255,255,255,.25) inset,0 6px 18px rgba(0,0,0,.45);z-index:3}
-.tax-cell.sel{box-shadow:0 0 0 2px #fff inset;z-index:2}
-.tax-cell b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tax-cell span{font-size:10px;color:rgba(255,255,255,.7);font-family:"Source Code Pro",monospace}
+.tax-map{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;border-radius:8px}
+.tax-col{min-width:0}
+.tax-col-h{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:6px}
+.tax-col-h i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.tax-row{padding:4px 6px;border-radius:6px;cursor:pointer;border:1px solid transparent;transition:background .12s}
+.tax-row:hover{background:rgba(255,255,255,.05)}
+.tax-row.sel{background:rgba(124,58,237,.16);border-color:rgba(124,58,237,.5)}
+.tax-row-t{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.tax-row .nm{font-size:11.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tax-row.sel .nm{color:#c4b5fd;font-weight:600}
+.tax-row .ct{font-size:10px;color:var(--muted);font-family:"Source Code Pro",monospace;flex-shrink:0}
+.tax-fill{display:flex;height:100%;min-width:2px;border-radius:2px;overflow:hidden}
+.tax-fill i{display:block;height:100%}
 .tax-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
 .tax-legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .tax-selbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--muted);min-height:26px}
@@ -477,7 +484,7 @@ select{cursor:pointer}
 .tax-bar i{display:block;height:100%}
 .tax-item-terms{font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.5}
 .tax-facet-h i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:6px;vertical-align:middle}
-@media(max-width:860px){.tax-wrap{grid-template-columns:1fr}.tax-side{position:static;max-height:none}.tax-map{height:230px}}
+@media(max-width:860px){.tax-wrap{grid-template-columns:1fr}.tax-side{position:static;max-height:none}}
 .cat-card .cid.lv{max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
@@ -9258,55 +9265,34 @@ function taxSide(){
   el.innerHTML=h;
 }
 
-function taxSquarify(ch,x,y,w,h,out){
-  if(!ch.length) return;
-  if(ch.length===1){ out.push({d:ch[0].d,x:x,y:y,w:w,h:h}); return; }
-  var total=0,i;
-  for(i=0;i<ch.length;i++) total+=ch[i].a;
-  if(w>=h){
-    var acc=0,k=0;
-    while(k<ch.length-1 && acc+ch[k].a < total/2){ acc+=ch[k].a; k++; }
-    if(!acc){ acc=ch[0].a; k=1; }
-    var w1=w*(acc/total);
-    taxSquarify(ch.slice(0,k),x,y,w1,h,out);
-    taxSquarify(ch.slice(k),x+w1,y,w-w1,h,out);
-  }else{
-    var acc2=0,k2=0;
-    while(k2<ch.length-1 && acc2+ch[k2].a < total/2){ acc2+=ch[k2].a; k2++; }
-    if(!acc2){ acc2=ch[0].a; k2=1; }
-    var h1=h*(acc2/total);
-    taxSquarify(ch.slice(0,k2),x,y,w,h1,out);
-    taxSquarify(ch.slice(k2),x,y+h1,w,h-h1,out);
-  }
-}
-
 function taxMap(){
   var el=document.getElementById('tax-map'); if(!el||!window.TAXONOMY) return;
-  var T=window.TAXONOMY, C=taxCompute(), data=[];
-  T.terms.forEach(function(t){
-    var n=(C.map[t.id]||[]).length;
-    if(n>0) data.push({id:t.id,name:t.name,count:n,facet:t.facet,def:t.def});
+  var T=window.TAXONOMY, C=taxCompute(), h='';
+  T.facets.forEach(function(f){
+    var ts=T.terms.filter(function(t){return t.facet===f.id});
+    if(!ts.length) return;
+    var col=TAX_FCOLOR[f.id]||'#7c3aed', max=1;
+    ts.forEach(function(t){ var n=(C.map[t.id]||[]).length; if(n>max) max=n; });
+    h+='<div class="tax-col"><div class="tax-col-h"><span><i style="background:'+col+'"></i>'+f.name+'</span><span>'+ts.length+' 词条</span></div>';
+    ts.forEach(function(t){
+      var arr=C.map[t.id]||[], n=arr.length, comp=taxComp(arr), seg='';
+      ['pol','ds','sc'].forEach(function(k){
+        if(comp[k]) seg+='<i style="flex:'+comp[k]+';background:'+TAX_KCOLOR[k]+'"></i>';
+      });
+      var act=taxState.terms.indexOf(t.id)>=0;
+      h+='<div class="tax-row'+(act?' sel':'')+'" title="'+catEsc(t.name)+'（'+n+' 项）· '+catEsc(t.def)+'" onclick="taxToggle(\''+t.id+'\')">'
+        +'<div class="tax-row-t"><span class="nm">'+t.name+'</span><span class="ct">'+n+'</span></div>'
+        +'<div class="tax-bar"><div class="tax-fill" style="width:'+(n/max*100)+'%">'+seg+'</div></div></div>';
+    });
+    h+='</div>';
   });
-  data.sort(function(a,b){return b.count-a.count;});
-  var W=1000,H=1000,out=[];
-  taxSquarify(data.map(function(d){return {d:d,a:d.count};}),0,0,W,H,out);
-  var html='';
-  out.forEach(function(r){
-    var d=r.d,col=TAX_FCOLOR[d.facet]||'#7c3aed';
-    var pw=(r.w/W*100),ph=(r.h/H*100),sel=taxState.terms.indexOf(d.id)>=0;
-    var lab=(pw>=9&&ph>=8)?('<b>'+catEsc(d.name)+'</b>'):'';
-    var cnt=(pw>=9&&ph>=15)?('<span>'+d.count+'</span>'):'';
-    html+='<div class="tax-cell'+(sel?' sel':'')+'" title="'+catEsc(d.name)+'（'+d.count+' 项）· '+catEsc(d.def)
-      +'" style="left:'+(r.x/W*100)+'%;top:'+(r.y/H*100)+'%;width:'+pw+'%;height:'+ph
-      +'%;background:'+taxHexA(col,.3)+';border-color:'+taxHexA(col,.62)+'" onclick="taxToggle(\''+d.id+'\')">'+lab+cnt+'</div>';
-  });
-  el.innerHTML=html||'<div class="empty-tip" style="padding:40px 0;text-align:center">暂无数据</div>';
+  el.innerHTML=h;
   var lg=document.getElementById('tax-legend');
   if(lg){
     lg.innerHTML=T.facets.map(function(f){
       var n=T.terms.filter(function(t){return t.facet===f.id}).length;
       return '<span><i style="background:'+(TAX_FCOLOR[f.id]||'#7c3aed')+'"></i>'+f.name+' '+n+' 个词条</span>';
-    }).join('');
+    }).join('')+'<span style="color:var(--ink2)">条宽＝本分面内条目数（相对最大值）；颜色＝政策法规 / 数据集 / 量表构成</span>';
   }
 }
 
