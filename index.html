@@ -495,7 +495,7 @@ select{cursor:pointer}
 .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:16px}
 .rep-block h4{margin:0 0 8px;font-size:12.5px;color:var(--ink)}
 .rep-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:11.5px}
-.rep-row .rl{width:96px;flex-shrink:0;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rep-row .rl{width:116px;flex-shrink:0;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rep-row .rc{width:34px;text-align:right;color:var(--muted);font-family:"Source Code Pro",monospace;flex-shrink:0}
 .rep-row .rep-b{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
 .rep-row .rep-b i{display:block;height:100%}
@@ -9387,46 +9387,115 @@ function taxYear(s){
   var m=String(s||'').match(/(19|20)\d{2}/);
   return m?parseInt(m[0],10):null;
 }
+function taxYears(s){
+  var out=[], re=/(19|20)\d{2}/g, str=String(s||''), m;
+  while((m=re.exec(str))) out.push(parseInt(m[0],10));
+  return out;
+}
 function taxNum(s){
   var m=String(s==null?'':s).replace(/,/g,'').match(/\d+(\.\d+)?/);
   return m?parseFloat(m[0]):null;
 }
+function taxBasic(d,kw){
+  var a=d&&d.basic; if(!a||!a.length) return '';
+  for(var i=0;i<a.length;i++){ if(String(a[i].k||'').indexOf(kw)>=0) return String(a[i].v||''); }
+  return '';
+}
+function taxReg(r){
+  var s=String(r||'').trim();
+  if(!s||s==='-'||s==='未标注'||/^N\/A$/i.test(s)) return '未标注';
+  if(/美国|United States|USA|U\.S\./i.test(s)) return '美国';
+  if(/中国|China|全国|大陆|内地/i.test(s)) return '中国';
+  if(/全球|多国|国际|World|Global|OECD|欧盟|欧洲/i.test(s)) return '全球/多国';
+  if(/澳大利亚|澳洲|Australia/i.test(s)) return '澳大利亚';
+  if(/英国|United Kingdom|UK/i.test(s)) return '英国';
+  if(/加拿大|Canada/i.test(s)) return '加拿大';
+  if(/德国|Germany/i.test(s)) return '德国';
+  if(/日本|Japan/i.test(s)) return '日本';
+  if(/韩国|Korea/i.test(s)) return '韩国';
+  return s.replace(/[（(].*$/,'').replace(/\s+/g,' ').slice(0,10);
+}
+function taxLvGroup(l){
+  l=String(l||'');
+  if(/他国/.test(l)) return '他国法律';
+  if(/国际/.test(l)) return '国际组织指南';
+  if(/司法解释/.test(l)) return '法律 · 行政法规';
+  if(/地方性法规/.test(l)) return '地方性法规';
+  if(/^法律/.test(l)||/行政法规/.test(l)&&!/地方/.test(l)) return '法律 · 行政法规';
+  if(/地方规范性文件/.test(l)) return '地方规范性文件';
+  if(/部门规章|部门规范性文件/.test(l)) return '部门规章与规范性文件';
+  return '其他';
+}
+function taxBucket(y,kind){
+  if(kind==='ds'){
+    if(y<=2005) return '≤2005';
+    if(y<=2010) return '2006–2010';
+    if(y<=2015) return '2011–2015';
+    if(y<=2020) return '2016–2020';
+    return '2021 以来';
+  }
+  if(y<=2015) return '≤2015';
+  if(y<=2018) return '2016–2018';
+  if(y<=2021) return '2019–2021';
+  if(y<=2024) return '2022–2024';
+  return '2025 以来';
+}
+function repOrder(o,order){
+  return Object.keys(o).sort(function(a,b){return order.indexOf(a)-order.indexOf(b);})
+    .map(function(k){return k+' '+o[k];}).join('，');
+}
 function repRows(obj,color,maxRows){
   var arr=Object.keys(obj).map(function(k){return [k,obj[k]];}).sort(function(a,b){return b[1]-a[1];});
   if(maxRows) arr=arr.slice(0,maxRows);
-  var max=arr.length?arr[0][1]:1;
+  if(!arr.length) return '<div class="rep-row" style="color:var(--muted)">无可统计条目</div>';
+  var max=arr[0][1]||1;
   return arr.map(function(r){
-    return '<div class="rep-row"><span class="rl">'+catEsc(r[0])+'</span><span class="rc">'+r[1]+'</span>'
+    return '<div class="rep-row" title="'+catEsc(r[0])+'：'+r[1]+'"><span class="rl">'+catEsc(r[0])+'</span><span class="rc">'+r[1]+'</span>'
       +'<div class="rep-b"><i style="width:'+(r[1]/max*100)+'%;background:'+color+'"></i></div></div>';
   }).join('');
 }
 function taxReport(src){
-  var pol=[],dsl=[],scl=[];
-  src.forEach(function(x){ if(x.k==='pol') pol.push(x.raw); else if(x.k==='ds') dsl.push(x.raw); else scl.push(x.raw); });
+  var pol=[],dsA=[],dsB=[],scl=[];
+  src.forEach(function(x){
+    if(x.k==='pol') pol.push(x.raw);
+    else if(x.k==='ds'){ if(x.raw&&x.raw.basic) dsB.push(x.raw); else dsA.push(x.raw); }
+    else scl.push(x.raw);
+  });
   var md=[], tips=[];
 
   /* —— 政策法规 —— */
-  var lv={}, tier={}, yr=[], iss={};
+  var lv={}, lvg={}, tier={}, pyr=[], iss={};
   pol.forEach(function(d){
-    if(d.level) lv[d.level]=(lv[d.level]||0)+1;
+    if(d.level){ lv[d.level]=(lv[d.level]||0)+1; var g=taxLvGroup(d.level); lvg[g]=(lvg[g]||0)+1; }
     var t={national:'国家层面',ministry:'部委层面',local:'地方层面',intl:'国际组织',foreign:'他国立法'}[d.category||'']||'其他';
     tier[t]=(tier[t]||0)+1;
-    var y=taxYear(d.publish_date); if(y) yr.push(y);
+    pyr=pyr.concat(taxYears(d.publish_date));
     if(d.issuer) iss[d.issuer]=(iss[d.issuer]||0)+1;
   });
+  var pyB={}; pyr.forEach(function(y){ var b=taxBucket(y,'pol'); pyB[b]=(pyB[b]||0)+1; });
   /* —— 数据集 —— */
-  var ns=[], agg=0, noVar=0, dsReg={}, dsYr=[], noSize=0;
-  dsl.forEach(function(d){
-    var s=taxNum(d.sample_size);
-    if(s&&s>0) ns.push(s); else noSize++;
-    if(/聚合|汇总/.test(String(d.notes||''))) agg++;
-    if(!d.var_count) noVar++;
-    if(d.region) dsReg[d.region]=(dsReg[d.region]||0)+1;
-    var y=taxYear(d.time_info); if(y) dsYr.push(y);
+  var ns=[], agg=0, noVar=0, noSize=0, smallN=0, fullMd=0, dsReg={}, dsYr=[], dsYb={};
+  function dss(d){ return d.sample_size!==undefined?d.sample_size:taxBasic(d,'样本量'); }
+  function dst(d){ return d.time_info!==undefined?d.time_info:taxBasic(d,'调查时间'); }
+  dsA.concat(dsB).forEach(function(d){
+    var s=taxNum(dss(d));
+    if(s&&s>=50) ns.push(s); else if(s&&s>0) smallN++; else noSize++;
+    if(!d.basic){
+      if(/聚合|汇总/.test(String(d.notes||''))) agg++;
+      var okV=d.var_count&&d.var_count!=='-';
+      if(!okV) noVar++;
+      var okS=d.sample_size&&d.sample_size!=='-', okT=d.time_info&&d.time_info!=='-';
+      if(okS&&okV&&okT) fullMd++;
+      var rg=taxReg(d.region); dsReg[rg]=(dsReg[rg]||0)+1;
+    }
+    var ys=taxYears(dst(d));
+    if(ys.length){ dsYr=dsYr.concat(ys); var yb=taxBucket(Math.min.apply(null,ys),'ds'); dsYb[yb]=(dsYb[yb]||0)+1; }
+    else dsYb['未标注']=(dsYb['未标注']||0)+1;
   });
   ns.sort(function(a,b){return a-b;});
   var med=null;
   if(ns.length) med=ns.length%2?ns[(ns.length-1)/2]:Math.round((ns[ns.length/2-1]+ns[ns.length/2])/2);
+  var smin=ns.length?ns[0]:null, smax=ns.length?ns[ns.length-1]:null;
   /* —— 量表 —— */
   var conf=0, inf=0, scTop=[];
   scl.forEach(function(s){
@@ -9435,44 +9504,52 @@ function taxReport(src){
   });
   scTop.sort(function(a,b){return b[1]-a[1];});
 
-  var lead='本次筛选共 <b>'+src.length+'</b> 项，由政策法规（'+pol.length+'）、数据集（'+dsl.length+'）、量表（'+scl.length+'）三类组成。';
+  var lead='本次筛选共 <b>'+src.length+'</b> 项：政策法规 '+pol.length+' 项，数据集 '+(dsA.length+dsB.length)+' 项'
+    +(dsB.length?('（其中精选公开数据集 '+dsB.length+' 项）'):'')
+    +'，量表 '+scl.length+' 项。';
   md.push('# 主题图谱 · 资料概况与质量说明','',lead.replace(/<[^>]+>/g,''));
 
   /* —— 汇总指标 —— */
   var kpi='<div class="rep-kpi">'
     +'<span>政策法规<b>'+pol.length+'</b></span>'
-    +'<span>数据集<b>'+dsl.length+'</b></span>'
+    +'<span>数据集<b>'+(dsA.length+dsB.length)+'</b></span>'
     +'<span>量表<b>'+scl.length+'</b></span>';
-  if(pol.length&&yr.length){ kpi+='<span>政策时间跨度<b>'+Math.min.apply(null,yr)+'–'+Math.max.apply(null,yr)+'</b></span>'; }
-  if(dsl.length&&med) kpi+='<span>样本量中位数<b>'+med.toLocaleString()+'</b></span>';
-  if(dsl.length&&dsYr.length) kpi+='<span>数据时间跨度<b>'+Math.min.apply(null,dsYr)+'–'+Math.max.apply(null,dsYr)+'</b></span>';
+  if(pol.length&&pyr.length){ kpi+='<span>政策发布时间<b>'+Math.min.apply(null,pyr)+'–'+Math.max.apply(null,pyr)+'</b></span>'; }
+  if(med) kpi+='<span>样本量中位数<b>'+med.toLocaleString()+'</b></span>';
+  if(dsYr.length) kpi+='<span>数据时间跨度<b>'+Math.min.apply(null,dsYr)+'–'+Math.max.apply(null,dsYr)+'</b></span>';
+  if(dsA.length) kpi+='<span>元数据完整度<b>'+Math.round(fullMd/dsA.length*100)+'%</b></span>';
   kpi+='</div>';
 
   /* —— 分块图表 —— */
   var grid='<div class="rep-grid">';
   if(pol.length){
-    grid+='<div class="rep-block"><h4>政策法规 · 效力级别</h4>'+repRows(lv,'#6366f1',6)+'</div>';
-    grid+='<div class="rep-block"><h4>政策法规 · 层级</h4>'+repRows(tier,'#7c3aed',5)+'</div>';
+    grid+='<div class="rep-block"><h4>政策法规 · 效力级别</h4>'+repRows(lvg,'#6366f1',6)+'</div>';
+    grid+='<div class="rep-block"><h4>政策法规 · 发布时间</h4>'+repRows(pyB,'#7c3aed',6)+'</div>';
     if(Object.keys(iss).length) grid+='<div class="rep-block"><h4>主要发文机关（前 5）</h4>'+repRows(iss,'#a78bfa',5)+'</div>';
-    md.push('','## 政策法规','- 效力级别：'+(Object.keys(lv).length?Object.keys(lv).map(function(k){return k+' '+lv[k];}).join('，'):'—'));
+    md.push('','## 政策法规');
+    md.push('- 效力级别：'+(Object.keys(lvg).length?Object.keys(lvg).map(function(k){return k+' '+lvg[k];}).join('，'):'—'));
     md.push('- 层级：'+(Object.keys(tier).length?Object.keys(tier).map(function(k){return k+' '+tier[k];}).join('，'):'—'));
+    if(Object.keys(pyB).length) md.push('- 发布时间：'+repOrder(pyB,['≤2015','2016–2018','2019–2021','2022–2024','2025 以来']));
   }
-  if(dsl.length){
-    var buckets={'<1000':0,'1000–5000':0,'5000–2万':0,'≥2万':0,'未标注':noSize};
+  if(dsA.length||dsB.length){
+    var buckets={'50–1000':0,'1000–5000':0,'5000–2万':0,'≥2万':0,'口径存疑/过小':smallN,'未标注':noSize};
     ns.forEach(function(v){
-      if(v<1000) buckets['<1000']++; else if(v<5000) buckets['1000–5000']++;
+      if(v<1000) buckets['50–1000']++; else if(v<5000) buckets['1000–5000']++;
       else if(v<20000) buckets['5000–2万']++; else buckets['≥2万']++;
     });
-    grid+='<div class="rep-block"><h4>数据集 · 样本规模</h4>'+repRows(buckets,'#10b981',5)+'</div>';
-    if(Object.keys(dsReg).length) grid+='<div class="rep-block"><h4>数据集 · 主要地区（前 5）</h4>'+repRows(dsReg,'#06b6d4',5)+'</div>';
+    grid+='<div class="rep-block"><h4>数据集 · 样本规模</h4>'+repRows(buckets,'#10b981',6)+'</div>';
+    if(Object.keys(dsReg).length) grid+='<div class="rep-block"><h4>数据集 · 主要地区</h4>'+repRows(dsReg,'#06b6d4',5)+'</div>';
+    grid+='<div class="rep-block"><h4>数据集 · 起始年份</h4>'+repRows(dsYb,'#22d3ee',6)+'</div>';
     md.push('','## 数据集','- 样本规模分档：'+Object.keys(buckets).map(function(k){return k+' '+buckets[k];}).join('，'));
-    md.push('- 样本量中位数：'+(med?med.toLocaleString():'—')+'（可统计 '+ns.length+' 个）');
-    if(Object.keys(dsReg).length) md.push('- 主要地区：'+Object.keys(dsReg).map(function(k){return k+' '+dsReg[k];}).slice(0,5).join('，'));
+    md.push('- 样本量中位数：'+(med?med.toLocaleString():'—')+'（可统计 '+ns.length+' 项）');
+    if(Object.keys(dsReg).length) md.push('- 主要地区：'+Object.keys(dsReg).sort(function(a,b){return dsReg[b]-dsReg[a];}).slice(0,5).map(function(k){return k+' '+dsReg[k];}).join('，'));
+    md.push('- 起始年份：'+repOrder(dsYb,['≤2005','2006–2010','2011–2015','2016–2020','2021 以来','未标注']));
+    if(dsA.length) md.push('- 元数据完整度：'+Math.round(fullMd/dsA.length*100)+'%（样本量 / 变量数 / 时间范围齐全）');
   }
   if(scl.length){
     grid+='<div class="rep-block"><h4>量表 · 收录状态</h4>'+repRows({'已确认':conf,'推测对应':inf},'#f59e0b',2)+'</div>';
     if(scTop.length){
-      var top3={}; scTop.slice(0,3).forEach(function(x){ top3[x[0]+'（'+x[1]+' 个数据集）']=x[1]; });
+      var top3={}; scTop.slice(0,3).forEach(function(x){ top3[x[0]]=x[1]; });
       grid+='<div class="rep-block"><h4>量表 · 关联数据集最多</h4>'+repRows(top3,'#fbbf24',3)+'</div>';
       md.push('','## 量表','- 状态：已确认 '+conf+' 项，推测对应 '+inf+' 项');
       md.push('- 关联数据集最多：'+scTop.slice(0,3).map(function(x){return x[0]+'（'+x[1]+' 个）';}).join('，'));
@@ -9481,26 +9558,35 @@ function taxReport(src){
   grid+='</div>';
 
   /* —— 质量提示（规则判定） —— */
-  var lvMain=Object.keys(lv).sort(function(a,b){return lv[b]-lv[a];})[0]||'';
-  var localShare=((tier['地方层面']||0)/Math.max(1,pol.length)*100);
+  var nowY=new Date().getFullYear();
   if(pol.length){
-    if(localShare>=55) tips.push('政策以<b>地方层面</b>为主（'+Math.round(localShare)+'%），法律效力层级偏低，若需论证制度依据，建议同时引用国家层面的法律或行政法规。');
-    var topLaw=(lv['法律']||0)+(lv['行政法规']||0);
-    if(!topLaw) tips.push('本组政策中<b>没有法律或行政法规</b>，多为规章与规范性文件，引用时需注意其效力范围。');
-    if(yr.length){
-      var latest=Math.max.apply(null,yr);
-      if(latest<new Date().getFullYear()-2) tips.push('最新一件政策发布于 '+latest+' 年，距今已有数年，引用前建议核对是否有新版本或废止情况。');
+    var localShare=((tier['地方层面']||0)/Math.max(1,pol.length)*100);
+    if(localShare>=55) tips.push('政策以<b>地方层面</b>为主（'+Math.round(localShare)+'%），效力层级偏低；若需论证制度依据，建议同时引用国家层面的法律或行政法规。');
+    var topLaw=(lv['法律']||0)+(lv['行政法规']||0)+(lv['司法解释']||0);
+    if(!topLaw) tips.push('本组政策中<b>没有法律、行政法规或司法解释</b>，多为规章与规范性文件，引用时需注意其效力范围。');
+    if(pyr.length){
+      var latest=Math.max.apply(null,pyr);
+      if(latest<nowY-2) tips.push('最新一件政策发布于 '+latest+' 年，距今已有数年，引用前建议核对是否仍现行有效。');
+      var oldN=pyr.filter(function(y){return y<=nowY-5;}).length;
+      if(oldN/pyr.length>=0.7) tips.push('约 '+Math.round(oldN/pyr.length*100)+'% 的政策发布于 5 年前，做「现行有效」论证时需逐条核对时效。');
     }
-    if(iss&&Object.keys(iss).length){
+    if(Object.keys(iss).length){
       var topIss=Object.keys(iss).sort(function(a,b){return iss[b]-iss[a];})[0];
       if(iss[topIss]/pol.length>=0.5) tips.push('超过一半的文件由单一机关（'+topIss+'）发布，覆盖面可能集中于特定系统，建议补充其他部门的文件。');
     }
   }
-  if(dsl.length){
+  if(dsA.length||dsB.length){
     if(med&&med<1500) tips.push('数据集<b>样本量中位数偏小</b>（'+med.toLocaleString()+'），做组间比较或效应量估计时统计功效有限。');
     else if(med&&med>=5000) tips.push('数据集样本规模总体较好（中位数 '+med.toLocaleString()+'），适合做分层与亚组分析。');
+    if(smin&&smax&&smax/Math.max(1,smin)>=500) tips.push('样本量跨度极大（最小 '+smin.toLocaleString()+'、最大 '+smax.toLocaleString()+'），中位数仅作参考，分组比较时建议按规模分层。');
     if(agg) tips.push('其中 '+agg+' 个为<b>聚合统计数据</b>（非个体级），只能做宏观比较，不支持个体层面的建模。');
     if(noVar) tips.push(noVar+' 个数据集未标注变量数，复用前需打开原始数据核对字段与编码。');
+    if(smallN) tips.push(smallN+' 个条目的「样本量」实为研究数、指标数或文档数（均小于 50），已排除在样本量统计之外，引用时需核对原始口径。');
+    if(dsA.length){
+      var mdPct=Math.round(fullMd/dsA.length*100);
+      if(mdPct<60) tips.push('平台收录条目的<b>元数据完整度仅 '+mdPct+'%</b>（样本量、变量数、时间范围齐全者），使用前建议补齐关键字段。');
+    }
+    if(dsB.length) tips.push('其中 '+dsB.length+' 项为精选公开数据集，以简介与核心指标为主，缺少统一的样本量与变量结构字段，横向比较时口径可能不一致。');
     if(noSize) tips.push(noSize+' 个条目缺少明确的样本量说明。');
   }
   if(scl.length&&inf&&inf/scl.length>=0.3) tips.push('量表中 <b>'+inf+' 项为推测对应</b>（依据题项关键词自动匹配），作为测量工具引用前建议人工核实。');
@@ -9511,7 +9597,7 @@ function taxReport(src){
     +tips.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>';
   md.push('','## 质量提示与使用建议');
   tips.forEach(function(t){ md.push('- '+t.replace(/<[^>]+>/g,'')); });
-  md.push('','> 本说明由页面按条目元数据自动统计生成，非大模型撰写；结论仅反映本组条目的构成，不代表研究质量评价。');
+  md.push('','> 本说明由页面按条目元数据自动统计生成，非大模型撰写。口径：政策看效力级别、层级、发文时间与发文机关；数据集看样本量、地区、起始年份与元数据完整度；量表看收录状态与关联数据集数。结论反映本组条目的构成特征，不构成对研究质量的评价。');
 
   taxState.repMd=md.join('\n');
   return '<div class="rep-h"><h3>资料概况与质量说明</h3><span class="rep-sub">按当前筛选自动统计 · 非模型生成</span>'
