@@ -434,7 +434,8 @@ select{cursor:pointer}
 .tax-side{position:sticky;top:80px;border:1px solid var(--line);border-radius:12px;background:var(--bg-card);padding:14px;max-height:calc(100vh - 120px);overflow:auto}
 .tax-facet{margin-bottom:14px}
 .tax-facet-h{font-size:11.5px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:0 0 6px;padding-left:2px}
-.tax-term{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--ink2);border:1px solid transparent}
+.tax-term{display:block;padding:5px 8px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--ink2);border:1px solid transparent}
+.tax-term-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
 .tax-term:hover{background:var(--bg-elev);color:var(--ink)}
 .tax-term.active{background:rgba(124,58,237,.16);border-color:rgba(124,58,237,.45);color:#c4b5fd;font-weight:600}
 .tax-term .n{font-size:10.5px;color:var(--muted);font-family:"Source Code Pro",monospace}
@@ -454,7 +455,29 @@ select{cursor:pointer}
 .tax-badge.pol{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.4);color:#a5b4fc}
 .tax-badge.ds{background:rgba(16,185,129,.13);border-color:rgba(16,185,129,.35);color:#6ee7b7}
 .tax-badge.sc{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.35);color:#fbbf24}
-@media(max-width:860px){.tax-wrap{grid-template-columns:1fr}.tax-side{position:static;max-height:none}}
+.tax-mapbox{border:1px solid var(--line);border-radius:12px;background:var(--bg-card);padding:12px 14px;margin-bottom:10px}
+.tax-map{position:relative;width:100%;height:300px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.02)}
+.tax-cell{position:absolute;box-sizing:border-box;border-radius:5px;padding:4px 7px;overflow:hidden;cursor:pointer;border:1px solid transparent;transition:box-shadow .12s,transform .12s;display:flex;flex-direction:column;justify-content:center;font-size:11px;line-height:1.25;color:var(--ink)}
+.tax-cell:hover{box-shadow:0 0 0 2px rgba(255,255,255,.25) inset,0 6px 18px rgba(0,0,0,.45);z-index:3}
+.tax-cell.sel{box-shadow:0 0 0 2px #fff inset;z-index:2}
+.tax-cell b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tax-cell span{font-size:10px;color:rgba(255,255,255,.7);font-family:"Source Code Pro",monospace}
+.tax-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+.tax-legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.tax-selbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--muted);min-height:26px}
+.tax-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.45);color:#c4b5fd;border-radius:999px;padding:2px 7px 2px 10px;font-size:11.5px}
+.tax-chip .x{background:none;border:none;color:#a78bfa;cursor:pointer;font-size:12px;line-height:1;padding:0 2px}
+.tax-chip .x:hover{color:#fff}
+.tax-modes{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tax-modes button{background:var(--bg-elev);border:none;color:var(--ink2);font-size:11.5px;padding:4px 10px;cursor:pointer}
+.tax-modes button.on{background:rgba(124,58,237,.25);color:#c4b5fd;font-weight:600}
+.tax-dist{display:flex;height:8px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,.05);margin:10px 0 6px}
+.tax-dist i{display:block;height:100%}
+.tax-bar{display:flex;height:3px;border-radius:2px;overflow:hidden;margin-top:4px;background:rgba(255,255,255,.06)}
+.tax-bar i{display:block;height:100%}
+.tax-item-terms{font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.tax-facet-h i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:6px;vertical-align:middle}
+@media(max-width:860px){.tax-wrap{grid-template-columns:1fr}.tax-side{position:static;max-height:none}.tax-map{height:230px}}
 .cat-card .cid.lv{max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
@@ -5202,6 +5225,12 @@ else:
     <button class="btn sm" onclick="taxReset()">重置</button>
   </div>
 
+  <div class="tax-mapbox">
+    <div class="tax-map" id="tax-map"></div>
+    <div class="tax-legend" id="tax-legend"></div>
+  </div>
+  <div class="tax-selbar" id="tax-selbar"></div>
+
   <div class="tax-wrap">
     <aside class="tax-side" id="tax-side"></aside>
     <div class="tax-main">
@@ -9076,7 +9105,24 @@ function catExport(){
 
 /* ========= 主题图谱：受控词表跨库聚合 ========= */
 var TAX_SRC='taxonomy_data.js?v=20261112';
-var taxState={term:null,bucket:'all',q:'',loaded:false};
+var TAX_FCOLOR={subject:'#7c3aed',policy:'#6366f1',pop:'#06b6d4',data:'#10b981',stage:'#f59e0b',region:'#ec4899'};
+var TAX_KCOLOR={pol:'#6366f1',ds:'#10b981',sc:'#f59e0b'};
+var taxState={terms:[],bucket:'all',q:'',mode:'or',loaded:false};
+
+function taxHexA(hex,a){
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';
+}
+function taxTermInfo(id){
+  var T=window.TAXONOMY||{terms:[]}, ts=T.terms||[];
+  for(var i=0;i<ts.length;i++) if(ts[i].id===id) return ts[i];
+  return null;
+}
+function taxComp(arr){
+  var o={pol:0,ds:0,sc:0};
+  (arr||[]).forEach(function(x){ o[x.k]=(o[x.k]||0)+1; });
+  return o;
+}
 
 function taxLoad(){
   if(window.TAXONOMY) return Promise.resolve();
@@ -9171,75 +9217,170 @@ function taxCompute(){
   return TAX_CACHE;
 }
 
-function taxCounts(){
-  var C=taxCompute(), out={};
-  Object.keys(C.map).forEach(function(k){ out[k]=C.map[k].length; });
-  return out;
-}
-
 function taxSide(){
   var el=document.getElementById('tax-side'); if(!el) return;
-  var T=window.TAXONOMY, cnt=taxCounts();
+  var T=window.TAXONOMY, C=taxCompute();
   var h='';
   T.facets.forEach(function(f){
     var ts=T.terms.filter(function(t){return t.facet===f.id});
-    h+='<div class="tax-facet"><div class="tax-facet-h">'+f.name+'</div>';
+    if(!ts.length) return;
+    h+='<div class="tax-facet"><div class="tax-facet-h"><i style="background:'+(TAX_FCOLOR[f.id]||'#7c3aed')+'"></i>'+f.name+'</div>';
     ts.forEach(function(t){
-      h+='<div class="tax-term'+(taxState.term===t.id?' active':'')+'" onclick="taxSetTerm(\''+t.id+'\')">'
-        +'<span>'+t.name+'</span><span class="n">'+(cnt[t.id]||0)+'</span></div>';
+      var arr=C.map[t.id]||[], comp=taxComp(arr), tot=arr.length||1, bar='';
+      ['pol','ds','sc'].forEach(function(k){
+        if(comp[k]) bar+='<i style="width:'+(comp[k]/tot*100)+'%;background:'+TAX_KCOLOR[k]+'"></i>';
+      });
+      var act=taxState.terms.indexOf(t.id)>=0;
+      h+='<div class="tax-term'+(act?' active':'')+'" title="'+catEsc(t.def)+'" onclick="taxToggle(\''+t.id+'\')">'
+        +'<div class="tax-term-top"><span>'+t.name+'</span><span class="n">'+arr.length+'</span></div>'
+        +'<div class="tax-bar">'+bar+'</div></div>';
     });
     h+='</div>';
   });
   el.innerHTML=h;
 }
 
-function taxSetTerm(id){
-  taxState.term=(taxState.term===id?null:id);
+function taxSquarify(ch,x,y,w,h,out){
+  if(!ch.length) return;
+  if(ch.length===1){ out.push({d:ch[0].d,x:x,y:y,w:w,h:h}); return; }
+  var total=0,i;
+  for(i=0;i<ch.length;i++) total+=ch[i].a;
+  if(w>=h){
+    var acc=0,k=0;
+    while(k<ch.length-1 && acc+ch[k].a < total/2){ acc+=ch[k].a; k++; }
+    if(!acc){ acc=ch[0].a; k=1; }
+    var w1=w*(acc/total);
+    taxSquarify(ch.slice(0,k),x,y,w1,h,out);
+    taxSquarify(ch.slice(k),x+w1,y,w-w1,h,out);
+  }else{
+    var acc2=0,k2=0;
+    while(k2<ch.length-1 && acc2+ch[k2].a < total/2){ acc2+=ch[k2].a; k2++; }
+    if(!acc2){ acc2=ch[0].a; k2=1; }
+    var h1=h*(acc2/total);
+    taxSquarify(ch.slice(0,k2),x,y,w,h1,out);
+    taxSquarify(ch.slice(k2),x,y+h1,w,h-h1,out);
+  }
+}
+
+function taxMap(){
+  var el=document.getElementById('tax-map'); if(!el||!window.TAXONOMY) return;
+  var T=window.TAXONOMY, C=taxCompute(), data=[];
+  T.terms.forEach(function(t){
+    var n=(C.map[t.id]||[]).length;
+    if(n>0) data.push({id:t.id,name:t.name,count:n,facet:t.facet,def:t.def});
+  });
+  data.sort(function(a,b){return b.count-a.count;});
+  var W=1000,H=1000,out=[];
+  taxSquarify(data.map(function(d){return {d:d,a:d.count};}),0,0,W,H,out);
+  var html='';
+  out.forEach(function(r){
+    var d=r.d,col=TAX_FCOLOR[d.facet]||'#7c3aed';
+    var pw=(r.w/W*100),ph=(r.h/H*100),sel=taxState.terms.indexOf(d.id)>=0;
+    var lab=(pw>=9&&ph>=8)?('<b>'+catEsc(d.name)+'</b>'):'';
+    var cnt=(pw>=9&&ph>=15)?('<span>'+d.count+'</span>'):'';
+    html+='<div class="tax-cell'+(sel?' sel':'')+'" title="'+catEsc(d.name)+'（'+d.count+' 项）· '+catEsc(d.def)
+      +'" style="left:'+(r.x/W*100)+'%;top:'+(r.y/H*100)+'%;width:'+pw+'%;height:'+ph
+      +'%;background:'+taxHexA(col,.3)+';border-color:'+taxHexA(col,.62)+'" onclick="taxToggle(\''+d.id+'\')">'+lab+cnt+'</div>';
+  });
+  el.innerHTML=html||'<div class="empty-tip" style="padding:40px 0;text-align:center">暂无数据</div>';
+  var lg=document.getElementById('tax-legend');
+  if(lg){
+    lg.innerHTML=T.facets.map(function(f){
+      var n=T.terms.filter(function(t){return t.facet===f.id}).length;
+      return '<span><i style="background:'+(TAX_FCOLOR[f.id]||'#7c3aed')+'"></i>'+f.name+' '+n+' 个词条</span>';
+    }).join('');
+  }
+}
+
+function taxSelbar(){
+  var el=document.getElementById('tax-selbar'); if(!el||!window.TAXONOMY) return;
+  var sel=taxState.terms;
+  if(!sel.length){
+    el.innerHTML='<span>点击上方色块或左侧词条可多选；同一主题下的政策法规、数据集、量表会一起联动。</span>';
+    return;
+  }
+  el.innerHTML='<span>已选 '+sel.length+' 个词条：</span>'
+    +sel.map(function(id){ var t=taxTermInfo(id); return '<span class="tax-chip">'+(t?t.name:id)+'<button class="x" onclick="taxToggle(\''+id+'\')">✕</button></span>'; }).join('')
+    +'<span class="tax-modes"><button class="'+(taxState.mode==='or'?'on':'')+'" onclick="taxMode(\'or\')">并集</button>'
+    +'<button class="'+(taxState.mode==='and'?'on':'')+'" onclick="taxMode(\'and\')">交集</button></span>'
+    +'<button class="btn sm" style="padding:3px 10px;font-size:11.5px" onclick="taxReset()">清空</button>';
+}
+
+function taxToggle(id){
+  var i=taxState.terms.indexOf(id);
+  if(i>=0) taxState.terms.splice(i,1); else taxState.terms.push(id);
   taxState.bucket='all';
   taxRender();
 }
-
+function taxMode(m){ taxState.mode=(m==='and'?'and':'or'); taxRender(); }
 function taxSetBucket(b){ taxState.bucket=b; taxRender(); }
 function taxSearch(v){ taxState.q=v||''; taxRender(); }
 function taxReset(){
-  taxState={term:null,bucket:'all',q:'',loaded:true};
-  var q=document.getElementById('tax-q'); if(q) q.value='';
+  taxState={terms:[],bucket:'all',q:'',mode:'or',loaded:true};
+  var qi=document.getElementById('tax-q'); if(qi) qi.value='';
   taxRender();
+}
+
+function taxMatch(){
+  var C=taxCompute(), sel=taxState.terms;
+  if(!sel.length) return C.items.pol.concat(C.items.ds,C.items.sc);
+  var lists=sel.map(function(id){return C.map[id]||[];});
+  var key=function(it){return it.k+'|'+it.id;};
+  if(taxState.mode==='and'){
+    var rest=lists.slice(1);
+    return lists[0].filter(function(it){
+      var k0=key(it);
+      return rest.every(function(L){
+        for(var j=0;j<L.length;j++) if(key(L[j])===k0) return true;
+        return false;
+      });
+    });
+  }
+  var seen={},out=[];
+  lists.forEach(function(L){
+    L.forEach(function(it){ var k0=key(it); if(!seen[k0]){ seen[k0]=1; out.push(it); } });
+  });
+  return out;
 }
 
 function taxRender(){
   if(!window.TAXONOMY) return;
-  var C=taxCompute(), T=window.TAXONOMY;
-  taxSide();
-  // 头部
+  var C=taxCompute(), T=window.TAXONOMY, sel=taxState.terms;
+  taxSide(); taxMap(); taxSelbar();
   var head=document.getElementById('tax-head');
-  var cur=T.terms.filter(function(t){return t.id===taxState.term})[0];
-  if(cur){
-    var cntC=(C.map[cur.id]||[]);
-    var pc=cntC.filter(function(x){return x.k==='pol'}).length, dc=cntC.filter(function(x){return x.k==='ds'}).length, sc=cntC.filter(function(x){return x.k==='sc'}).length;
-    var pf=T.facets.filter(function(f){return f.id===cur.facet})[0];
-    head.innerHTML='<h3>'+cur.name+'</h3><p class="def">'+cur.def+'</p>'
-      +'<div class="rel">分面：'+pf.name+' · 政策法规 '+pc+' 条 · 数据集 '+dc+' 个 · 量表 '+sc+' 项</div>';
-  }else{
-    var all=C.items;
-    head.innerHTML='<h3>全部词条</h3><p class="def">'+T.intro+'</p>'
-      +'<div class="rel">政策法规 '+(window.POLICIES||[]).length+' 条 · 数据集 '+all.ds.length+' 个 · 量表 '+all.sc.length+' 项</div>';
-  }
 
-  // 筛选
+  // 结果集：先按已选词条聚合
+  var src=taxMatch();
   var q=(taxState.q||'').trim().toLowerCase();
-  var src=cur?(C.map[cur.id]||[]):(C.items.pol.concat(C.items.ds,C.items.sc));
   if(q){
+    var defs=sel.map(function(id){ var t=taxTermInfo(id); return t?t.def:''; }).join(' ').toLowerCase();
     src=src.filter(function(it){
       if(it.title.toLowerCase().indexOf(q)>=0) return true;
       if(it.sub&&it.sub.toLowerCase().indexOf(q)>=0) return true;
-      if(cur && cur.def.toLowerCase().indexOf(q)>=0) return true;
+      if(defs.indexOf(q)>=0) return true;
       return false;
     });
   }
   var nPol=src.filter(function(x){return x.k==='pol'}).length,
       nDs=src.filter(function(x){return x.k==='ds'}).length,
       nSc=src.filter(function(x){return x.k==='sc'}).length;
+
+  var pct=function(n){ return src.length?(n/src.length*100):0; };
+  var dist='<div class="tax-dist">'
+    +'<i style="width:'+pct(nPol)+'%;background:'+TAX_KCOLOR.pol+'"></i>'
+    +'<i style="width:'+pct(nDs)+'%;background:'+TAX_KCOLOR.ds+'"></i>'
+    +'<i style="width:'+pct(nSc)+'%;background:'+TAX_KCOLOR.sc+'"></i></div>';
+  var rel='<div class="rel">政策法规 '+nPol+' 条 · 数据集 '+nDs+' 个 · 量表 '+nSc+' 项</div>';
+
+  if(!sel.length){
+    head.innerHTML='<h3>全部词条</h3><p class="def">'+T.intro+'</p>'+dist+rel;
+  }else{
+    var names=sel.map(function(id){ var t=taxTermInfo(id); return t?t.name:id; }).join(' · ');
+    var ds=sel.slice(0,3).map(function(id){ var t=taxTermInfo(id); return t?('<b>'+t.name+'：</b>'+t.def):''; }).join('　');
+    if(sel.length>3) ds+='　…共 '+sel.length+' 个词条';
+    head.innerHTML='<h3>'+catEsc(names)+'</h3><p class="def">'+ds+'</p>'+dist+rel;
+  }
+
   var tabs=document.getElementById('tax-tabs');
   tabs.innerHTML=[['all','全部',src.length],['pol','政策法规',nPol],['ds','数据集',nDs],['sc','量表',nSc]]
     .map(function(t){return '<button class="tax-tab'+(taxState.bucket===t[0]?' active':'')+'" onclick="taxSetBucket(\''+t[0]+'\')">'+t[1]+' '+t[2]+'</button>'}).join('');
@@ -9249,7 +9390,7 @@ function taxRender(){
   var shown=list.slice(0,120);
   if(cnt) cnt.textContent='共 '+list.length+' 项'+(list.length>shown.length?('（显示前 '+shown.length+' 项，可用检索缩小范围）'):'');
   var el=document.getElementById('tax-list');
-  if(!shown.length){ el.innerHTML='<div class="empty-tip">没有匹配的内容，试试切换词条或清空关键词</div>'; return; }
+  if(!shown.length){ el.innerHTML='<div class="empty-tip">没有匹配的内容，试试增减已选词条、切换「并集 / 交集」或清空关键词</div>'; return; }
   el.innerHTML=shown.map(taxItemHtml).join('');
 }
 
@@ -9263,9 +9404,11 @@ function taxItemHtml(it){
   }else{
     extra=it.raw.cat+' · '+(it.raw.status==='confirmed'?'已确认':'推测');
   }
+  var tl=(it.terms||[]).slice(0,4).map(function(id){ var t=taxTermInfo(id); return t?t.name:id; }).join(' · ');
   return '<div class="tax-item" onclick="taxOpen(\''+it.k+'\',\''+String(it.id).replace(/'/g,"\\'")+'\')">'
     +'<h4>'+catEsc(it.title)+'</h4>'
-    +'<div class="meta">'+badge+'<span>'+catEsc(extra)+'</span></div></div>';
+    +'<div class="meta">'+badge+'<span>'+catEsc(extra)+'</span></div>'
+    +(tl?('<div class="tax-item-terms">🏷 '+catEsc(tl)+'</div>'):'')+'</div>';
 }
 
 function taxOpen(k,id){
