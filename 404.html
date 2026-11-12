@@ -9127,13 +9127,31 @@ function taxComp(arr){
 function taxLoad(){
   if(window.TAXONOMY) return Promise.resolve();
   if(window._taxP) return window._taxP;
-  window._taxP=new Promise(function(res,rej){
-    var sc=document.createElement('script');
-    sc.src=TAX_SRC;
-    sc.onload=res; sc.onerror=function(){rej(new Error('taxonomy_data.js 加载失败'))};
-    document.head.appendChild(sc);
+  var urls=[TAX_SRC,'taxonomy_data.js',TAX_SRC+'&r='+(new Date().getTime())];
+  var p=new Promise(function(res,rej){
+    var i=0;
+    function attempt(){
+      var sc=document.createElement('script');
+      sc.src=urls[i]||urls[urls.length-1];
+      sc.onload=function(){
+        if(window.TAXONOMY) res();
+        else { i++; if(i<urls.length) attempt(); else rej(new Error('taxonomy_data.js 内容为空')); }
+      };
+      sc.onerror=function(){
+        i++;
+        if(i<urls.length) attempt();
+        else rej(new Error('taxonomy_data.js 加载失败（网络或 CDN 缓存问题）'));
+      };
+      document.head.appendChild(sc);
+    }
+    attempt();
   });
+  window._taxP=p.catch(function(e){ window._taxP=null; throw e; });
   return window._taxP;
+}
+function taxRetry(){
+  window._taxP=null; window.TAXONOMY=null; TAX_CACHE=null;
+  taxInit();
 }
 
 function taxItems(){
@@ -9446,7 +9464,13 @@ function taxInit(){
     if(!window.CATALOG && typeof catLoad==='function') chain=chain.then(function(){ return catLoad('meta'); });
     return chain;
   }).then(function(){ taxRender(); })
-   .catch(function(e){ if(cnt) cnt.textContent='词表加载失败：'+e.message; });
+   .catch(function(e){
+     if(cnt) cnt.innerHTML='内容加载失败：'+catEsc(e.message)+'　<button class="btn sm" style="padding:2px 10px;font-size:12px" onclick="taxRetry()">重试</button>';
+     var head=document.getElementById('tax-head');
+     if(head) head.innerHTML='<h3>载入未完成</h3><p class="def">词条数据未能载入，可能是网络波动或 CDN 缓存。点上面的「重试」即可重新载入；若仍失败请刷新页面。</p>';
+     var map=document.getElementById('tax-map');
+     if(map) map.innerHTML='';
+   });
 }
 
 /* ========= 政策法规：法律法规 / 政策文件 ========= */
