@@ -429,6 +429,32 @@ select{cursor:pointer}
 @media(max-width:720px){.cat-grid{grid-template-columns:1fr}.cat-toolbar select{max-width:none;flex:1}.modal{padding:20px 16px}}
 /* 政策法规 */
 .pol-text p{margin:0 0 10px;line-height:1.9;font-size:13.5px;color:var(--ink2)}
+/* 主题图谱 */
+.tax-wrap{display:grid;grid-template-columns:262px 1fr;gap:20px;align-items:start}
+.tax-side{position:sticky;top:80px;border:1px solid var(--line);border-radius:12px;background:var(--bg-card);padding:14px;max-height:calc(100vh - 120px);overflow:auto}
+.tax-facet{margin-bottom:14px}
+.tax-facet-h{font-size:11.5px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:0 0 6px;padding-left:2px}
+.tax-term{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--ink2);border:1px solid transparent}
+.tax-term:hover{background:var(--bg-elev);color:var(--ink)}
+.tax-term.active{background:rgba(124,58,237,.16);border-color:rgba(124,58,237,.45);color:#c4b5fd;font-weight:600}
+.tax-term .n{font-size:10.5px;color:var(--muted);font-family:"Source Code Pro",monospace}
+.tax-term.active .n{color:#a78bfa}
+.tax-head{border:1px solid var(--line);border-radius:12px;background:var(--bg-card);padding:16px 18px;margin-bottom:14px}
+.tax-head h3{margin:0 0 6px;font-size:17px}
+.tax-head .def{color:var(--ink2);font-size:13px;line-height:1.75;margin:0}
+.tax-head .rel{margin-top:8px;font-size:11.5px;color:var(--muted)}
+.tax-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tax-tab{border:1px solid var(--line);background:var(--bg-elev);color:var(--ink2);padding:6px 12px;border-radius:8px;font-size:12.5px;cursor:pointer}
+.tax-tab.active{background:var(--chip);border-color:rgba(124,58,237,.5);color:#c4b5fd;font-weight:600}
+.tax-item{border:1px solid var(--line);border-radius:10px;background:var(--bg-card);padding:12px 14px;cursor:pointer;transition:all .16s;margin-bottom:8px}
+.tax-item:hover{border-color:rgba(124,58,237,.5);transform:translateY(-1px)}
+.tax-item h4{margin:0 0 4px;font-size:13.5px;font-weight:600;line-height:1.45}
+.tax-item .meta{font-size:11.5px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tax-badge{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--ink2)}
+.tax-badge.pol{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.4);color:#a5b4fc}
+.tax-badge.ds{background:rgba(16,185,129,.13);border-color:rgba(16,185,129,.35);color:#6ee7b7}
+.tax-badge.sc{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.35);color:#fbbf24}
+@media(max-width:860px){.tax-wrap{grid-template-columns:1fr}.tax-side{position:static;max-height:none}}
 .cat-card .cid.lv{max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
@@ -4561,7 +4587,7 @@ select{cursor:pointer}
     <button data-p="search" class="">文献检索</button>
     <button data-p="agent" class="">文献研究智能体</button>
     <button data-p="datasets">数据集收录</button>
-    
+    <button data-p="taxonomy">主题图谱</button>
     <button data-p="crawl" class="">数据爬取与智能分析</button>
     <button data-p="library">⭐ 我的收藏</button>
     <button data-p="about">ℹ 关于</button>
@@ -5147,14 +5173,35 @@ else:
     <div id="sc-body"></div>
   </div>
 
-  <!-- 详情弹窗（整页共用） -->
-  <div class="modal-bg" id="cat-modal-bg" onclick="if(event.target===this)catCloseDetail()">
-    <div class="modal" style="max-width:940px">
-      <button class="close-btn" onclick="catCloseDetail()">✕</button>
-      <div class="cat-detail" id="cat-detail"></div>
+</section><!-- /p-datasets -->
+
+<!-- 详情弹窗（整页共用，须置于任何 section.page 之外，否则在其它版面打开时会被 display:none 隐藏） -->
+<div class="modal-bg" id="cat-modal-bg" onclick="if(event.target===this)catCloseDetail()">
+  <div class="modal" style="max-width:940px">
+    <button class="close-btn" onclick="catCloseDetail()">✕</button>
+    <div class="cat-detail" id="cat-detail"></div>
+  </div>
+</div>
+
+<!-- ============ PAGE TAXONOMY: 主题图谱 ============ -->
+<section id="p-taxonomy" class="page">
+  <div class="page-title" style="margin-top:0"><h2>主题图谱</h2><div class="meta">受控词表 · 政策法规 / 数据集 / 量表统一聚合</div></div>
+
+  <div class="cat-toolbar">
+    <input class="input" id="tax-q" placeholder="搜索词条名 / 定义 / 任意资源标题…" oninput="taxSearch(this.value)">
+    <button class="btn sm" onclick="taxReset()">重置</button>
+  </div>
+
+  <div class="tax-wrap">
+    <aside class="tax-side" id="tax-side"></aside>
+    <div class="tax-main">
+      <div class="tax-head" id="tax-head"></div>
+      <div class="tax-tabs" id="tax-tabs"></div>
+      <div class="cat-count" id="tax-count">载入中…</div>
+      <div id="tax-list" class="tax-list"></div>
     </div>
   </div>
-</section><!-- /p-datasets -->
+</section><!-- /p-taxonomy -->
 
 <!-- ============ PAGE HEALTH: 卫生健康数据智能库 ============ -->
 <section id="p-health" class="page">
@@ -5672,6 +5719,7 @@ function go(p){
   if(p==='datasets') initDatasetsTab();
   if(p==='datasets') initCatalog();
   if(p==='datasets') initPolicies();
+  if(p==='taxonomy') taxInit();
   if(p==='analyze' && !window._analyzeInited){
     // 首次进入分析台：自动加载示例数据，让变量立即可见
     window._analyzeInited=true;
@@ -9016,6 +9064,238 @@ function catExport(){
   setTimeout(function(){ URL.revokeObjectURL(a.href); },3000);
 }
 
+/* ========= 主题图谱：受控词表跨库聚合 ========= */
+var TAX_SRC='taxonomy_data.js?v=20261112';
+var taxState={term:null,bucket:'all',q:'',loaded:false};
+
+function taxLoad(){
+  if(window.TAXONOMY) return Promise.resolve();
+  if(window._taxP) return window._taxP;
+  window._taxP=new Promise(function(res,rej){
+    var sc=document.createElement('script');
+    sc.src=TAX_SRC;
+    sc.onload=res; sc.onerror=function(){rej(new Error('taxonomy_data.js 加载失败'))};
+    document.head.appendChild(sc);
+  });
+  return window._taxP;
+}
+
+function taxItems(){
+  var pol=[], ds=[], sc=[];
+  (window.POLICIES||[]).forEach(function(d){
+    pol.push({k:'pol',id:d.id,title:d.title,sub:(d.issuer||'')+(d.publish_date?(' · '+d.publish_date):''),hay:[d.title,d.summary,d.issuer,(d.tags||[]).join(' '),d.level,d.region].join(' '),raw:d});
+  });
+  ((window.CATALOG||{}).datasets||[]).forEach(function(d){
+    ds.push({k:'ds',id:String(d.id),title:catTitle(d),sub:(d.region||'')+(d.theme?(' · '+d.theme):''),hay:[catTitle(d),d.description,d.theme,d.sub_category,d.region,d.contents,Array.isArray(d.groups)?d.groups.join(' '):Object.keys(d.groups||{}).map(function(k){return d.groups[k]}).join(' ')].join(' '),raw:d});
+  });
+  (window.KNOWN_DATASETS||[]).forEach(function(d){
+    if(((window.CATALOG||{}).datasets||[]).some(function(x){return String(x.id)===String(d.id)})) return;
+    ds.push({k:'ds',id:'cur-'+d.id,title:d.title,sub:(d.tag||''),hay:[d.title,d.en,d.summary,d.tag].join(' '),raw:d});
+  });
+  var S=window.SCALES||{};
+  ['confirmed','inferred'].forEach(function(k){
+    Object.keys(S[k]||{}).forEach(function(cat){
+      var c=S[k][cat];
+      (c.scales||[]).forEach(function(s2){
+        sc.push({k:'sc',id:cat+'|'+s2.name,title:s2.name+' · '+s2.full,sub:cat+'（'+s2.ids.length+' 个数据集）',
+                 hay:[s2.name,s2.full,cat].join(' '),raw:{cat:cat,name:s2.name,full:s2.full,ids:s2.ids,status:k}});
+      });
+    });
+  });
+  return {pol:pol,ds:ds,sc:sc};
+}
+
+function taxTermOf(it,terms){
+  var out=[], hay=it.hay.toLowerCase(), raw=it.raw;
+  terms.forEach(function(t){
+    var hit=false;
+    if(t.facet==='policy'){
+      if(t.cats && raw && t.cats.indexOf(raw.category)>=0) hit=true;
+      if(t.levels && raw && t.levels.indexOf(raw.level)>=0) hit=true;
+    }
+    if(!hit && t.kw && t.kw.length){
+      for(var i=0;i<t.kw.length;i++){
+        if(hay.indexOf(String(t.kw[i]).toLowerCase())>=0){hit=true;break;}
+      }
+    }
+    if(!hit && t.facet==='region' && raw){
+      var rg=(raw.region||'');
+      if(t.id==='r-intl' && (/WHO|联合国|国际|美国|英国|日本|印度|巴西|南非|澳大利亚|加拿大|德国|法国|韩国|意大利|挪威|新加坡|爱尔兰|维多利亚|昆士兰|安大略/).test(rg+' '+(raw.category||''))) hit=true;
+      if(t.id==='r-national' && (rg==='中国·国家'||rg===''||(raw.level==='法律')||(raw.level==='行政法规'))) hit=true;
+      if(t.id==='r-province' && /·(?!国家)[^（]+$/.test(rg) && !/市/.test(rg)) hit=true;
+      if(t.id==='r-city' && /市/.test(rg)) hit=true;
+    }
+    if(!hit && t.facet==='data' && it.k==='ds' && raw){
+      var th=((raw.theme||'')+' '+(raw.sub_category||'')+' '+(raw.description||'')).toLowerCase();
+      if(t.id==='d-cohort' && /队列|随访|追踪|longitudinal|cohort|panel|waves/.test(th)) hit=true;
+      if(t.id==='d-brain' && /脑|神经|影像|mri|fmri|基因|生物|eeg/.test(th)) hit=true;
+      if(t.id==='d-admin' && /统计|监测|年鉴|atlas|gbd|who|行政/.test(th)) hit=true;
+      if(t.id==='d-survey' && /调查|问卷|普查|survey|cfps|cgss|charls/.test(th)) hit=true;
+      if(t.id==='d-scale' && (window.SCALES&&window.SCALES.ds&&window.SCALES.ds[raw.id])) hit=true;
+    }
+    if(hit) out.push(t.id);
+  });
+  if(it.k==='sc'){
+    var map=(window.TAXONOMY.scaleCats||{})[raw.cat];
+    if(map) map.forEach(function(x){ if(out.indexOf(x)<0) out.push(x); });
+  }
+  return out;
+}
+
+var TAX_CACHE=null;
+function taxCompute(){
+  if(TAX_CACHE) return TAX_CACHE;
+  var T=window.TAXONOMY;
+  var all=taxItems();
+  var bucket={pol:all.pol,ds:all.ds,sc:all.sc};
+  var map={};
+  T.terms.forEach(function(t){ map[t.id]=[]; });
+  ['pol','ds','sc'].forEach(function(k){
+    bucket[k].forEach(function(it){
+      var ids=taxTermOf(it,T.terms);
+      it.terms=ids;
+      ids.forEach(function(tid){ if(map[tid]) map[tid].push(it); });
+    });
+  });
+  TAX_CACHE={map:map,items:bucket};
+  return TAX_CACHE;
+}
+
+function taxCounts(){
+  var C=taxCompute(), out={};
+  Object.keys(C.map).forEach(function(k){ out[k]=C.map[k].length; });
+  return out;
+}
+
+function taxSide(){
+  var el=document.getElementById('tax-side'); if(!el) return;
+  var T=window.TAXONOMY, cnt=taxCounts();
+  var h='';
+  T.facets.forEach(function(f){
+    var ts=T.terms.filter(function(t){return t.facet===f.id});
+    h+='<div class="tax-facet"><div class="tax-facet-h">'+f.name+'</div>';
+    ts.forEach(function(t){
+      h+='<div class="tax-term'+(taxState.term===t.id?' active':'')+'" onclick="taxSetTerm(\''+t.id+'\')">'
+        +'<span>'+t.name+'</span><span class="n">'+(cnt[t.id]||0)+'</span></div>';
+    });
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+function taxSetTerm(id){
+  taxState.term=(taxState.term===id?null:id);
+  taxState.bucket='all';
+  taxRender();
+}
+
+function taxSetBucket(b){ taxState.bucket=b; taxRender(); }
+function taxSearch(v){ taxState.q=v||''; taxRender(); }
+function taxReset(){
+  taxState={term:null,bucket:'all',q:'',loaded:true};
+  var q=document.getElementById('tax-q'); if(q) q.value='';
+  taxRender();
+}
+
+function taxRender(){
+  if(!window.TAXONOMY) return;
+  var C=taxCompute(), T=window.TAXONOMY;
+  taxSide();
+  // 头部
+  var head=document.getElementById('tax-head');
+  var cur=T.terms.filter(function(t){return t.id===taxState.term})[0];
+  if(cur){
+    var cntC=(C.map[cur.id]||[]);
+    var pc=cntC.filter(function(x){return x.k==='pol'}).length, dc=cntC.filter(function(x){return x.k==='ds'}).length, sc=cntC.filter(function(x){return x.k==='sc'}).length;
+    var pf=T.facets.filter(function(f){return f.id===cur.facet})[0];
+    head.innerHTML='<h3>'+cur.name+'</h3><p class="def">'+cur.def+'</p>'
+      +'<div class="rel">分面：'+pf.name+' · 政策法规 '+pc+' 条 · 数据集 '+dc+' 个 · 量表 '+sc+' 项</div>';
+  }else{
+    var all=C.items;
+    head.innerHTML='<h3>全部词条</h3><p class="def">'+T.intro+'</p>'
+      +'<div class="rel">政策法规 '+(window.POLICIES||[]).length+' 条 · 数据集 '+all.ds.length+' 个 · 量表 '+all.sc.length+' 项</div>';
+  }
+
+  // 筛选
+  var q=(taxState.q||'').trim().toLowerCase();
+  var src=cur?(C.map[cur.id]||[]):(C.items.pol.concat(C.items.ds,C.items.sc));
+  if(q){
+    src=src.filter(function(it){
+      if(it.title.toLowerCase().indexOf(q)>=0) return true;
+      if(it.sub&&it.sub.toLowerCase().indexOf(q)>=0) return true;
+      if(cur && cur.def.toLowerCase().indexOf(q)>=0) return true;
+      return false;
+    });
+  }
+  var nPol=src.filter(function(x){return x.k==='pol'}).length,
+      nDs=src.filter(function(x){return x.k==='ds'}).length,
+      nSc=src.filter(function(x){return x.k==='sc'}).length;
+  var tabs=document.getElementById('tax-tabs');
+  tabs.innerHTML=[['all','全部',src.length],['pol','政策法规',nPol],['ds','数据集',nDs],['sc','量表',nSc]]
+    .map(function(t){return '<button class="tax-tab'+(taxState.bucket===t[0]?' active':'')+'" onclick="taxSetBucket(\''+t[0]+'\')">'+t[1]+' '+t[2]+'</button>'}).join('');
+
+  var list=taxState.bucket==='all'?src:src.filter(function(x){return x.k===taxState.bucket});
+  var cnt=document.getElementById('tax-count');
+  var shown=list.slice(0,120);
+  if(cnt) cnt.textContent='共 '+list.length+' 项'+(list.length>shown.length?('（显示前 '+shown.length+' 项，可用检索缩小范围）'):'');
+  var el=document.getElementById('tax-list');
+  if(!shown.length){ el.innerHTML='<div class="empty-tip">没有匹配的内容，试试切换词条或清空关键词</div>'; return; }
+  el.innerHTML=shown.map(taxItemHtml).join('');
+}
+
+function taxItemHtml(it){
+  var badge=it.k==='pol'?'<span class="tax-badge pol">政策法规</span>':(it.k==='ds'?'<span class="tax-badge ds">数据集</span>':'<span class="tax-badge sc">量表</span>');
+  var extra='';
+  if(it.k==='pol'){
+    extra=(it.raw.level||'')+(it.raw.region?(' · '+it.raw.region):'');
+  }else if(it.k==='ds'){
+    extra=(it.raw.region||'')+(it.raw.sample_size&&it.raw.sample_size!=='-'?(' · n='+it.raw.sample_size):'');
+  }else{
+    extra=it.raw.cat+' · '+(it.raw.status==='confirmed'?'已确认':'推测');
+  }
+  return '<div class="tax-item" onclick="taxOpen(\''+it.k+'\',\''+String(it.id).replace(/'/g,"\\'")+'\')">'
+    +'<h4>'+catEsc(it.title)+'</h4>'
+    +'<div class="meta">'+badge+'<span>'+catEsc(extra)+'</span></div></div>';
+}
+
+function taxOpen(k,id){
+  if(k==='pol'){ if(typeof polOpenDetail==='function') polOpenDetail(id); }
+  else if(k==='ds'){
+    if(id.indexOf('cur-')===0){ if(typeof pubOpenCurated==='function') pubOpenCurated(id.slice(4)); }
+    else if(typeof catOpenDetail==='function') catOpenDetail(id);
+  }else{
+    var parts=id.split('|'), cat=parts[0], nm=parts[1];
+    var bg=document.getElementById('cat-modal-bg'), body=document.getElementById('cat-detail');
+    if(!bg||!body) return;
+    var S=window.SCALES||{}, found=null;
+    ['confirmed','inferred'].forEach(function(kk){ var c=(S[kk]||{})[cat]; if(c){ (c.scales||[]).forEach(function(s2){ if(s2.name===nm) found=s2; }); } });
+    if(!found){ return; }
+    var ids=found.ids||[];
+    var html='<h1>'+catEsc(found.name)+'</h1><p style="color:var(--muted);margin-top:-6px">'+catEsc(found.full)+'</p>'
+      +'<table><tr><th>量表类别</th><td>'+catEsc(cat)+'</td></tr>'
+      +'<tr><th>收录数据集</th><td>'+ids.length+' 个</td></tr></table>'
+      +'<h2>使用该量表的数据集</h2><p>'+ids.map(function(i2){return '<span class="sc-id" onclick="catCloseDetail();catOpenDetail('+i2+')">#'+i2+'</span>';}).join(' ')+'</p>';
+    bg.classList.add('open'); body.innerHTML=html;
+    bg.querySelector('.modal').scrollTop=0;
+  }
+}
+
+function taxInit(){
+  var cnt=document.getElementById('tax-count');
+  if(!document.getElementById('tax-list')) return;
+  if(window.TAXONOMY){ taxRender(); return; }
+  if(cnt) cnt.textContent='正在载入词表…';
+  taxLoad().then(function(){
+    // 依赖政策与数据集元数据，按需加载
+    var chain=Promise.resolve();
+    if(!window.POLICIES && typeof polLoad==='function') chain=chain.then(function(){ return polLoad('meta'); });
+    if(!window.SCALES && typeof catLoad==='function') chain=chain.then(function(){ return catLoad('scales'); });
+    if(!window.CATALOG && typeof catLoad==='function') chain=chain.then(function(){ return catLoad('meta'); });
+    return chain;
+  }).then(function(){ taxRender(); })
+   .catch(function(e){ if(cnt) cnt.textContent='词表加载失败：'+e.message; });
+}
+
 /* ========= 政策法规：法律法规 / 政策文件 ========= */
 var POL_VER='20261112b';
 var POL_SRC={meta:'policies_meta.js?v='+POL_VER,
@@ -9325,7 +9605,7 @@ window.addEventListener('hashchange',function(){
     go('datasets');
     return;
   }
-  if(['home','search','agent','analyze','library','datasets','about'].indexOf(p)>=0) go(p);
+  if(['home','search','agent','analyze','library','datasets','taxonomy','about'].indexOf(p)>=0) go(p);
 });
 function init(){
   renderHomeStats();
@@ -9337,7 +9617,7 @@ function init(){
   }else if(p==='policy'){
     if(parts[1]) polState.pendId=parts[1];
     go('datasets');
-  }else if(['home','search','agent','analyze','library','datasets','about'].indexOf(p)>=0) go(p);
+  }else if(['home','search','agent','analyze','library','datasets','taxonomy','about'].indexOf(p)>=0) go(p);
   document.getElementById('q').addEventListener('keydown',function(e){ if(e.key==='Enter') doSearch(); });
   var ed=document.getElementById('rs-code');
   if(ed){ed.addEventListener('keydown',function(e){
