@@ -9017,7 +9017,7 @@ function catExport(){
 }
 
 /* ========= 政策法规：法律法规 / 政策文件 ========= */
-var POL_VER='20261112';
+var POL_VER='20261112b';
 var POL_SRC={meta:'policies_meta.js?v='+POL_VER,
   'national':'policies_detail_national.js?v='+POL_VER,
   'ministry':'policies_detail_ministry.js?v='+POL_VER,
@@ -9058,6 +9058,7 @@ function polCard(d){
   if(d.publish_date) meta+='<span class="cat-chip t">'+catEsc(d.publish_date)+'</span>';
   if(d.issuer) meta+='<span class="cat-chip t">'+catEsc(d.issuer)+'</span>';
   if(d.region && d.region!=='中国·国家') meta+='<span class="cat-chip t">'+catEsc(d.region)+'</span>';
+  if((d.attachments||[]).length) meta+='<span class="cat-chip">📎 '+d.attachments.length+' 附件</span>';
   return '<div class="cat-card" onclick="polOpenDetail(\''+d.id+'\')">'
     +'<span class="cid lv">'+catEsc(d.level||'')+'</span>'
     +'<h4>'+catEsc(d.title)+'</h4>'
@@ -9159,7 +9160,10 @@ function polOpenDetail(id){
       if(d.summary) h+='<p>'+catEsc(d.summary)+'</p>';
       if((d.tags||[]).length) h+='<p>'+d.tags.map(function(t){return '<span class="cat-chip">'+catEsc(t)+'</span>';}).join(' ')+'</p>';
       if(d.source_url) h+='<p><a href="'+catEsc(d.source_url)+'" target="_blank" rel="noopener">↗ 查看原文页面</a></p>';
-      if((d.attachments||[]).length) h+='<h2>附件</h2>'+d.attachments.map(function(a){return '<p><a href="'+catEsc(a.url)+'" target="_blank" rel="noopener">'+catEsc(a.name||'附件')+'</a></p>';}).join('');
+      if((d.attachments||[]).length) h+='<h2>附件（'+d.attachments.length+'）</h2>'+d.attachments.map(function(a){
+        var t=(a.type==='pdf')?'PDF':(a.type==='word'?'Word':(a.type||'文件'));
+        return '<p><a href="'+catEsc(a.url)+'" target="_blank" rel="noopener">'+catEsc(a.name||'附件')+'</a> <code>'+t+'</code> <a href="'+catEsc(a.url)+'" download style="font-size:11px;color:var(--muted)">下载</a></p>';
+      }).join('');
     }
     h+='<h2>全文</h2>';
     h+= txt ? '<div class="pol-text">'+txt.split(/\n+/).filter(function(x){return x.trim();}).map(function(x){return '<p>'+catEsc(x)+'</p>';}).join('')+'</div>'
