@@ -4730,6 +4730,12 @@ select{cursor:pointer}
     </div>
   </div>
 
+  <p style="text-align:center;color:var(--muted);font-size:12px;line-height:1.8;margin:26px 0 6px">
+    平台功能仍在陆续上线与完善中 · 发现问题或希望新增内容，欢迎联系开发者
+    <a href="mailto:Haiyanzhu_s_mail@163.com" style="color:#a78bfa">Haiyanzhu_s_mail@163.com</a>
+    · <a href="#/about" style="color:var(--ink2)">查看平台说明</a>
+  </p>
+
 </section>
 
 <!-- ============ PAGE 2: SEARCH ============ -->
@@ -5662,51 +5668,61 @@ else:
 </section>
 
 <section id="p-about" class="page">
-  <div class="page-title"><h2>ℹ 关于 &amp; 透明声明</h2><div class="meta">平台说明 · 隐私 · 引用</div></div>
+  <div class="page-title"><h2>ℹ 关于 &amp; 透明声明</h2><div class="meta">平台简介 · 更新进度 · 联系开发者</div></div>
   <div class="about-card">
-    <h3>MindLab</h3>
-    <p>为心理健康及相关研究领域的科研人员设计：一站式检索三大公开学术 API（PubMed / Crossref / Semantic Scholar），获取文献与数据集信息。</p>
+    <h3>MindLab · 心理健康科研平台</h3>
+    <p>MindLab 面向心理健康及相关领域的科研人员、研究生与实务工作者，把「<b>找文献 → 读文献 → 找数据 → 找依据 → 按主题串起来</b>」这几件事放在同一个页面里完成。不需要安装软件，打开浏览器即可使用；检索与分析都在本地浏览器中进行，不上传你的研究数据。</p>
+    <p style="margin-top:10px">目前平台由五个模块组成，覆盖从文献、数据到政策法规与量表工具的完整链路。</p>
 
-    <h3 style="margin-top:24px">文献研究智能体</h3>
+    <h3 style="margin-top:26px">五个模块</h3>
     <ul>
-      <li><b>关键词驱动检索</b>：PubMed / Crossref / Semantic Scholar 三源文献爬取，按 DOI/PMID/标题去重。</li>
-      <li><b>结构化中文研究摘要</b>：从标题、摘要自动提取研究对象、方法学、样本量、核心发现四要素。</li>
-      <li><b>文献计量分析</b>：年份分布、高产作者、核心期刊、高频关键词、高被引 Top 10 可视化。</li>
-      <li><b>研究洞察</b>：主题聚类（基于关键词相似度）、引用脉络时间线、研究空白识别、推荐下一步研究方向。</li>
-      <li><b>🤖 STORM 模式</b>：多轮对话 → 真实文献检索 → 自动写出 8 章综述。</li>
-      <li><b>可下载报告</b>：一键生成 Markdown 综合报告，包含全部文献与数据集。</li>
+      <li><b>文献检索</b>：PubMed（NCBI E-utilities）、Crossref、Semantic Scholar 三源并行检索，按 DOI / PMID / 精确标题自动去重，去重前后条数同时显示。</li>
+      <li><b>文献研究智能体</b>：在检索结果基础上做结构化中文摘要（研究对象、方法学、样本量、核心发现）、文献计量分析（年份分布、高产作者、核心期刊、高频关键词、高被引 Top 10），并支持 STORM 多轮对话生成 8 章中文综述，可一键导出 Markdown 报告。</li>
+      <li><b>数据集收录</b>：公开数据集（85 条精选 + 294 条全量目录，含元数据与详情）、私有数据集（卫生健康四大类年鉴，网盘整包下载）、<b>政策法规</b>（国家 / 部委 / 地方 / 国际组织 / 他国法律，共 210 件，含全文与附件）、<b>量表全景索引</b>（19 类心理量表与收录数据集的对应关系）。</li>
+      <li><b>数据爬取与智能分析</b>：从 Harvard Dataverse、Zenodo、WHO 等多源批量抓取统计数据，并在浏览器内（Pyodide / WebR）做清洗、统计与绘图，支持对话式分析。</li>
+      <li><b>主题图谱</b>：用一套统一的主题分类（6 大分面、41 个词条）把政策法规、数据集、量表放进同一框架下检索——同一个词条下可以同时看到三类资源，并支持多词条并集 / 交集筛选。</li>
     </ul>
 
-    <h3 style="margin-top:24px">数据集收录</h3>
+    <h3 style="margin-top:26px">数据来源</h3>
     <ul>
-      <li><b>公开数据集</b>：WHO / GBD / OWID 等国际心理健康公开数据集，按分类浏览，可查看详细元数据。</li>
-      <li><b>私有数据集</b>：含卫生健康数据智能库（4 大类年鉴），百度网盘整包下载，支持五级链接回退。</li>
-      <li><b>数据爬取</b>：如需检索更多数据集，可使用「数据爬取与智能分析」模块，从 Harvard Dataverse、Zenodo、WHO 等多源抓取。</li>
+      <li><b>文献</b>：PubMed / NCBI、Crossref、Semantic Scholar 官方公开 API。</li>
+      <li><b>数据集</b>：WHO、GBD、OWID、World Mental Health Survey 等国际公开数据，以及《中国卫生健康统计年鉴》等年鉴资料。</li>
+      <li><b>政策法规</b>：国家法律法规数据库（flk.npc.gov.cn）、中国政府网政策库、各部委与省级卫健委 / 教育厅官网、WHO 与联合国等国际组织官方文件、各国立法机构公开文本。</li>
+      <li>所有条目均保留原文链接与来源站点，便于核对；政策附件的下载地址指向原始发布站点。</li>
     </ul>
 
-    <h3 style="margin-top:24px">文献检索</h3>
+    <h3 style="margin-top:26px">持续更新中</h3>
+    <p>本平台仍在陆续建设中，部分功能与数据会持续补充与调整，界面也可能随之优化。当前正在进行的方向包括：</p>
     <ul>
-      <li><b>PubMed E-utilities (NCBI)</b>：文献元数据，返回 PMID、标题、作者、期刊、年份。<a href="https://www.ncbi.nlm.nih.gov/books/NBK25499/" target="_blank">官方文档</a></li>
-      <li><b>Crossref API</b>：DOI 注册中心，返回 DOI、被引数、全文链接。<a href="https://api.crossref.org/" target="_blank">官方文档</a></li>
-      <li><b>Semantic Scholar API</b>：学术元数据，返回引用计数、TLDR。<a href="https://api.semanticscholar.org/api-docs/" target="_blank">官方文档</a></li>
-      <li>合并策略：按 DOI / PMID / 精确标题去重；去重前后条数均显示。</li>
+      <li>政策法规继续扩充（地方层面细化到更多省份与城市，补齐英国 Mental Health Act 等更多国家的专门立法）；</li>
+      <li>量表索引补充条目构成、计分方式与适用年龄等说明；</li>
+      <li>主题分类继续细化词条，并改进跨库的判定规则；</li>
+      <li>跨库全文检索与更丰富的分析图表。</li>
+    </ul>
+    <p style="margin-top:10px">因此你可能会看到个别条目的分类、数据或链接尚未完善，遇到这种情况欢迎直接反馈——这正是本阶段最需要的。</p>
+
+    <h3 style="margin-top:26px">问题反馈与联系</h3>
+    <div style="border:1px solid var(--line);border-radius:10px;background:var(--bg-elev);padding:12px 14px;margin:8px 0 4px">
+      <p style="margin:0">如果发现数据缺失、分类不准、链接失效，或希望新增某个模块 / 某个主题，请联系开发者：<br>
+      <a href="mailto:Haiyanzhu_s_mail@163.com" style="font-size:14px;font-weight:600">Haiyanzhu_s_mail@163.com</a></p>
+      <p style="margin:8px 0 0;font-size:12px;color:var(--muted)">反馈时请尽量注明「页面名称 + 具体条目名称（或链接）」，便于快速定位与修正。一般会在看到邮件后尽快回复。</p>
+    </div>
+
+    <h3 style="margin-top:26px">隐私说明</h3>
+    <ul>
+      <li>文献检索请求由浏览器直接发往各官方接口，不经过本平台服务器。</li>
+      <li>上传的数据文件与分析结果仅存在于当前浏览器会话，刷新即清除，不会被上传或留存。</li>
+      <li>收藏夹保存在浏览器 <span class="kbd">localStorage</span>（本机），可一键导出 CSV。</li>
+      <li>本平台未接入第三方统计与广告脚本。</li>
     </ul>
 
-    <h3 style="margin-top:24px">隐私说明</h3>
+    <h3 style="margin-top:26px">引用与免责</h3>
     <ul>
-      <li>检索请求从浏览器直接发送到官方接口（CORS 支持）。</li>
-      <li>上传的数据文件和分析结果仅在当前浏览器会话中可用。</li>
-      <li>收藏夹保存在 <span class="kbd">localStorage</span>（本机浏览器）中，可一键导出 CSV。</li>
-      <li>访问密码：<span class="kbd">mental_health</span>（在 <span class="kbd">index.html</span> 内修改 <span class="kbd">var PASS='…'</span>）。</li>
+      <li>引用某条政策法规或数据集时，请以条目中给出的「原文链接 / 来源站点」为准，本平台仅做整理与索引，不改变原始文本。</li>
+      <li>数据与政策文本的时效性以各自发布机构为准；用于正式研究或决策前，请务必核对官方原文。</li>
+      <li>数据整理与分类为人工归纳，可能存在疏漏，欢迎指正。</li>
     </ul>
-
-    <h3 style="margin-top:24px">部署方式</h3>
-    <ul>
-      <li>站点由 <span class="kbd">index.html</span> + <span class="kbd">datasets.js</span> 组成，无需服务器。</li>
-      <li>Fork 仓库后 push 到 GitHub，启用 <b>Pages</b> 即可获得独立访问地址。</li>
-      <li>修改密码：编辑 <span class="kbd">index.html</span> 中的 <span class="kbd">var PASS='…'</span>。</li>
-      <li>一键部署脚本：<span class="kbd">deploy_research_hub.ps1</span>。</li>
-    </ul>
+    <p style="margin-top:14px;font-size:12px;color:var(--muted)">数据整理截至 2026 年 11 月。如无特别说明，页面内容可自由用于学术研究与教学。</p>
   </div>
 </section>
 
