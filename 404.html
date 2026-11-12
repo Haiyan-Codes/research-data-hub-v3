@@ -502,6 +502,10 @@ select{cursor:pointer}
 .rep-note{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
 .rep-note h4{margin:0 0 6px;font-size:12.5px}
 .rep-note ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--ink2);line-height:1.85}
+.rep-src .src-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.rep-src h5{margin:0 0 4px;font-size:12px;color:var(--ink);font-weight:600}
+.rep-src ul{padding-left:16px}
+.rep-src li{margin-bottom:4px}
 @media(max-width:860px){.tax-wrap{grid-template-columns:1fr}.tax-side{position:static;max-height:none}}
 .cat-card .cid.lv{max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* modal */
@@ -9597,12 +9601,36 @@ function taxReport(src){
     +tips.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>';
   md.push('','## 质量提示与使用建议');
   tips.forEach(function(t){ md.push('- '+t.replace(/<[^>]+>/g,'')); });
-  md.push('','> 本说明由页面按条目元数据自动统计生成，非大模型撰写。口径：政策看效力级别、层级、发文时间与发文机关；数据集看样本量、地区、起始年份与元数据完整度；量表看收录状态与关联数据集数。结论反映本组条目的构成特征，不构成对研究质量的评价。');
+  md.push('','> 本说明由页面按条目元数据自动统计生成，非大模型撰写。结论反映本组条目的构成特征，不构成对研究质量的评价。');
+
+  /* —— 数据来源与统计口径 —— */
+  var site={};
+  pol.forEach(function(d){ var s=String(d.source_site||'').replace(/[（(]([^）)]*)[）)]/,'').trim(); if(s) site[s]=(site[s]||0)+1; });
+  var siteKeys=Object.keys(site).sort(function(a,b){return site[b]-site[a];});
+  var siteTxt=siteKeys.length?(siteKeys.slice(0,3).map(function(k){return k+'（'+site[k]+'）';}).join('、')+(siteKeys.length>3?(' 等 '+siteKeys.length+' 个来源'):'')):'—';
+  var totalCat=((window.CATALOG||{}).datasets||[]).length, totalCur=(window.KNOWN_DATASETS||[]).length;
+  var st=(window.SCALES||{}).stats||{};
+  var srcLis=[];
+  if(pol.length) srcLis.push('政策法规 '+pol.length+' 条，取自公开政府与组织网站：'+siteTxt+'；逐条登记发文机关、文号、发布日期、效力级别与原文链接。');
+  if(dsA.length+dsB.length) srcLis.push('数据集 '+(dsA.length+dsB.length)+' 条，其中平台收录目录 '+totalCat+' 条、精选公开数据集 '+totalCur+' 条（简介型条目，以官方全称与核心指标为主）。');
+  if(scl.length) srcLis.push('量表 '+scl.length+' 个条目，取自量表全景索引：已确认 '+(st.confirmed_scales||0)+' 个、推测对应 '+(st.inferred_scales||0)+' 个。');
+  var srcBlock='<div class="rep-note rep-src"><h4>数据来源与统计口径</h4><div class="src-grid">'
+    +'<div><h5>数据来源</h5><ul>'+srcLis.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'
+    +'<div><h5>统计口径</h5><ul>'
+    +'<li>政策：效力级别归并为「法律／行政法规／司法解释」「部门规章与规范性文件」「地方性法规」「地方规范性文件」「国际组织指南」「他国法律」六类；时间取发布日期年份。</li>'
+    +'<li>数据集：样本量取元数据 sample_size，小于 50 的按非样本量口径（研究数／指标数／文档数）计入「口径存疑/过小」，不参与中位数；起始年份取时间范围最早年份；地区按国别归一。</li>'
+    +'<li>量表：状态分「已确认」与「推测对应」，推测项由题项关键词自动匹配，未经人工核验。</li>'
+    +'<li>元数据完整度＝样本量、变量数、时间范围三项齐全的条目占该组收录条目的比例。</li>'
+    +'<li>同一词条下同一来源条目只计一次；全部统计在浏览器本地按当前筛选结果实时计算，不发起外部请求。</li>'
+    +'</ul></div></div></div>';
+  md.push('','## 数据来源与统计口径','- 数据来源：政策法规取自公开政府与组织网站（'+siteKeys.slice(0,3).map(function(k){return k+' '+site[k];}).join('，')+'），数据集取自平台收录目录与精选公开数据集，量表取自量表全景索引。');
+  md.push('- 统计口径：政策按效力级别归并、按发布日期年份统计；数据集样本量小于 50 的按非样本量口径剔除，起始年份取最早年份，地区按国别归一；量表的推测项由关键词自动匹配；统计均在浏览器本地实时计算。');
 
   taxState.repMd=md.join('\n');
   return '<div class="rep-h"><h3>资料概况与质量说明</h3><span class="rep-sub">按当前筛选自动统计 · 非模型生成</span>'
-    +'<button class="btn sm" style="padding:3px 10px;font-size:11.5px" onclick="taxExportReport()">导出 Markdown</button></div>'
-    +'<p class="rep-lead">'+lead+'</p>'+kpi+grid+note;
+    +'<button class="btn sm" style="padding:3px 10px;font-size:11.5px" onclick="taxExportReport()">导出 Markdown</button>'
+    +'<button class="btn sm" style="padding:3px 10px;font-size:11.5px" onclick="taxExportPDF()">导出 PDF</button></div>'
+    +'<p class="rep-lead">'+lead+'</p>'+kpi+grid+note+srcBlock;
 }
 window.taxExportReport=function(){
   var t=taxState.repMd||'';
@@ -9613,6 +9641,47 @@ window.taxExportReport=function(){
   a.download='主题图谱_资料概况_'+new Date().toISOString().slice(0,10)+'.md';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(a.href); },1200);
+};
+
+window.taxExportPDF=function(){
+  var rep=document.getElementById('tax-report');
+  if(!rep||!taxState.repMd){ alert('暂无可导出的报告'); return; }
+  var titles=taxState.terms.map(function(id){ var t=taxTermInfo(id); return t?t.name:id; }).join(' · ')||'全部词条';
+  var d=new Date();
+  var pad=function(n){ return ('0'+n).slice(-2); };
+  var dstr=d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+  var body=rep.innerHTML.replace(/<button[^>]*>[^<]*<\/button>/g,'');
+  var css='@page{size:A4;margin:13mm}'
+    +'body{margin:0;font:12px/1.6 Inter,"PingFang SC","Microsoft YaHei",sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'h1{font-size:17px;margin:0 0 3px;font-weight:700}'
+    +'.meta{font-size:10.5px;color:#666;margin:0 0 10px;padding-bottom:7px;border-bottom:1px solid #ddd}'
+    +'.rep-h{display:none}'
+    +'.rep-lead{font-size:11.5px;margin:2px 0 7px}'
+    +'.rep-kpi{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 9px}'
+    +'.rep-kpi span{font-size:10.5px;color:#555}.rep-kpi b{margin-left:4px;color:#000}'
+    +'.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}'
+    +'.rep-block h4{font-size:11.5px;margin:0 0 5px}'
+    +'.rep-row{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:10.5px}'
+    +'.rep-row .rl{width:104px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#333}'
+    +'.rep-row .rc{width:30px;flex-shrink:0;text-align:right;font-family:monospace;color:#666}'
+    +'.rep-row .rep-b{flex:1;height:4px;background:#e6e6e6;border-radius:2px;overflow:hidden}'
+    +'.rep-row .rep-b i{display:block;height:100%}'
+    +'.rep-note{margin-top:10px;border-top:1px solid #ddd;padding-top:7px}'
+    +'.rep-note h4{font-size:11.5px;margin:0 0 4px}'
+    +'.rep-note ul{margin:0;padding-left:16px;font-size:10.5px;line-height:1.7}'
+    +'.src-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}'
+    +'.rep-note h5{font-size:11px;margin:0 0 3px;color:#000}'
+    +'.rep-src ul{padding-left:14px}'
+    +'li{page-break-inside:avoid}';
+  var w=window.open('','_blank');
+  if(!w){ alert('浏览器拦截了新窗口，请允许本页弹出窗口后重试'); return; }
+  w.document.open();
+  w.document.write('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>主题图谱_资料概况_'+pad(d.getMonth()+1)+pad(d.getDate())+'</title><style>'+css+'</style></head><body>'
+    +'<h1>主题图谱 · 资料概况与质量说明</h1>'
+    +'<p class="meta">筛选词条：'+catEsc(titles)+'　｜　生成时间：'+dstr+'　｜　来源：MindLab 科研数据平台（浏览器本地统计）</p>'
+    +body+'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} },400);
 };
 
 function taxRender(){
