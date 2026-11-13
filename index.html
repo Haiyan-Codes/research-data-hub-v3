@@ -14830,6 +14830,16 @@ function newsReset(){newsPause();newsStart();}
     {id:'ch7',title:'第 7 章 · 局限与争论',role:'generate_limitations'},
     {id:'ch8',title:'第 8 章 · 未来研究方向与建议',role:'generate_future'}
   ];
+  // 综述写作规范：随 purpose 一起提交给后端，逐章生成时约束文风与分析深度
+  const ST_WRITE_SPEC = `
+
+【综述撰写规范（必须遵守）】
+1. 文体：正式文献综述的学术语体。段落按主题组织，不按文献逐篇组织；严禁一篇文献一段、"X 研究…Y 研究…"的并列堆砌，也不许每个小标题只写一段就跳转。
+2. 结构：标题、摘要、检索策略等简短章节从简；其余各章开头先给出本章核心判断（1–2 句），再分主题展开，章末设"本章小结"概括共识、分歧与证据强度。正文不少于 4 段。
+3. 分析要求：每个主题须整合至少 2 篇文献横向比较（结论、样本、测量工具与切点、地区与时间、研究设计、效应量）；若仅 1 篇支持，须写明"仅 1 项研究支持，证据有限"。对每个主题给出证据强度（强/中/弱）及理由。
+4. 引用规范：仅在论述需要处引用（如 [3]），同一段落可引多篇，不得堆砌引用编号。
+5. 准确性：只使用给定文献中出现的信息与数字；文献未报告的不得补造，应注明"文献未报告"；区分相关与因果关系；对自评量表所得结果提示共同方法偏差。
+6. 语言：中文书面学术语体，删去"具有重要意义""值得关注"等无依据套话。`;
   const ST_LS_CFG = 'st_config_v1';
   const ST_LS_STATE = 'st_state_v1';
 
@@ -15171,7 +15181,7 @@ function newsReset(){newsPause();newsStart();}
       }
       const resp = await stFetch('/synthesize',{
         topic,
-        purpose: purpose + (extras.length ? '\n\n'+extras.join('\n') : ''),
+        purpose: purpose + (extras.length ? '\n\n'+extras.join('\n') : '') + ST_WRITE_SPEC,
         clarifyAnswers,
         confirmedQuestions: questions,
         englishKeywords: state.englishKeywords,
